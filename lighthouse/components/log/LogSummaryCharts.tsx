@@ -9,8 +9,10 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Cell,
 } from "recharts";
 import type { RawLogRow } from "@/lib/types";
+import { EVENT_CATEGORY, CATEGORY_COLORS } from "@/lib/types";
 
 interface Props {
   rows: RawLogRow[];
@@ -18,33 +20,72 @@ interface Props {
 
 const AXIS = { fill: "#64748b", fontSize: 11 };
 const GRID = { stroke: "#e2e8f0" };
-const BAR = "#64748b";
+
+/** Distinct, balanced palette for time buckets (not tied to event semantics). */
+const TIME_BUCKET_PALETTE = [
+  "#4f6db8",
+  "#2d9b8f",
+  "#c4863d",
+  "#8b5cf6",
+  "#d9546c",
+  "#3b82c4",
+  "#65a30d",
+  "#b45309",
+  "#6366f1",
+  "#0d9488",
+  "#be185d",
+  "#4b5563",
+];
+
+const FALLBACK_EVENT_COLORS = [
+  "#5b7cfa",
+  "#2db3a4",
+  "#d0943b",
+  "#a855c9",
+  "#e6546a",
+  "#3b82f6",
+  "#14b8a6",
+  "#f97316",
+  "#64748b",
+];
+
+function colorForEventType(eventKey: string, index: number): string {
+  const cat = EVENT_CATEGORY[eventKey];
+  if (cat && CATEGORY_COLORS[cat]) return CATEGORY_COLORS[cat];
+  return FALLBACK_EVENT_COLORS[index % FALLBACK_EVENT_COLORS.length];
+}
 
 export function LogSummaryCharts({ rows }: Props) {
-  const { byDay, topEvents } = useMemo(() => {
-    const dayMap = new Map<string, number>();
+  const { byMinute, topEvents } = useMemo(() => {
+    const minuteMap = new Map<string, number>();
     const eventMap = new Map<string, number>();
 
     for (const r of rows) {
-      const day = r.timestamp.slice(0, 10);
-      dayMap.set(day, (dayMap.get(day) ?? 0) + 1);
+      const minute = r.timestamp.slice(0, 16);
+      minuteMap.set(minute, (minuteMap.get(minute) ?? 0) + 1);
       eventMap.set(r.event, (eventMap.get(r.event) ?? 0) + 1);
     }
 
-    const byDay = Array.from(dayMap.entries())
+    const byMinute = Array.from(minuteMap.entries())
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, count]) => ({ date, count }));
+      .map(([slot, count], i) => ({
+        slot,
+        label: slot.length >= 16 ? slot.slice(5, 16).replace("T", " ") : slot,
+        count,
+        fill: TIME_BUCKET_PALETTE[i % TIME_BUCKET_PALETTE.length],
+      }));
 
     const topEvents = Array.from(eventMap.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10)
-      .map(([event, count]) => ({
+      .map(([event, count], i) => ({
         event: event.length > 36 ? `${event.slice(0, 34)}…` : event,
         count,
         fullEvent: event,
+        fill: colorForEventType(event, i),
       }));
 
-    return { byDay, topEvents };
+    return { byMinute, topEvents };
   }, [rows]);
 
   if (rows.length === 0) {
@@ -59,17 +100,18 @@ export function LogSummaryCharts({ rows }: Props) {
     <div className="grid gap-4 md:grid-cols-2">
       <div className="rounded-lg border border-border bg-card p-4">
         <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Events by day
+          Events by minute (visible window)
         </h3>
         <div className="mt-3 h-52">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={byDay} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+            <BarChart data={byMinute} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={GRID.stroke} vertical={false} />
               <XAxis
-                dataKey="date"
+                dataKey="label"
                 tick={AXIS}
                 axisLine={{ stroke: GRID.stroke }}
                 tickMargin={6}
+                interval="preserveStartEnd"
               />
               <YAxis
                 tick={AXIS}
@@ -80,12 +122,16 @@ export function LogSummaryCharts({ rows }: Props) {
               />
               <Tooltip
                 cursor={{ fill: "oklch(0.95 0.01 250 / 0.6)" }}
-                content={({ active, payload, label }) => {
+                content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
+                  const row = payload[0].payload as {
+                    slot: string;
+                    count: number;
+                  };
                   const v = Number(payload[0].value);
                   return (
                     <div className="rounded-md border border-border bg-card px-2.5 py-2 text-xs shadow-sm">
-                      <p className="font-medium text-foreground">Date: {String(label)}</p>
+                      <p className="font-mono text-[10px] text-foreground">{row.slot}</p>
                       <p className="mt-1 text-muted-foreground">
                         {Number.isFinite(v) ? v.toLocaleString() : "—"} events
                       </p>
@@ -93,7 +139,11 @@ export function LogSummaryCharts({ rows }: Props) {
                   );
                 }}
               />
-              <Bar dataKey="count" name="Events" fill={BAR} radius={[2, 2, 0, 0]} maxBarSize={48} />
+              <Bar dataKey="count" name="Events" radius={[2, 2, 0, 0]} maxBarSize={48}>
+                {byMinute.map((entry, i) => (
+                  <Cell key={`${entry.slot}-${i}`} fill={entry.fill} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -138,7 +188,11 @@ export function LogSummaryCharts({ rows }: Props) {
                   );
                 }}
               />
-              <Bar dataKey="count" name="Count" fill={BAR} radius={[0, 2, 2, 0]} maxBarSize={14} />
+              <Bar dataKey="count" name="Count" radius={[0, 2, 2, 0]} maxBarSize={14}>
+                {topEvents.map((entry, i) => (
+                  <Cell key={`${entry.fullEvent}-${i}`} fill={entry.fill} />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>

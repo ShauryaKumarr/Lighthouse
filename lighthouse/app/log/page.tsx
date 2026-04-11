@@ -27,8 +27,9 @@ export default function LogPage() {
       <header className="space-y-1 border-b border-border pb-6">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Lighthouse log</h1>
         <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          Browse the full Inhibitor event log. Use search and event filters to narrow results; charts
-          reflect the filtered set. Select a row to read metadata in the detail panel.
+          A simulated live tail replays fifty sampled lines from your dataset on a timer—new events
+          appear at the top. Search and filters apply to the live buffer; charts follow the same
+          window. Critical and elevated events pulse in the priority column.
         </p>
       </header>
       <LogTable rows={rawRows} />
