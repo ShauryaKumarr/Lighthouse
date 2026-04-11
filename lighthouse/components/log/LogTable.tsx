@@ -21,7 +21,7 @@ import {
   Settings,
 } from "lucide-react";
 import type { RawLogRow } from "@/lib/types";
-import { EVENT_CATEGORY } from "@/lib/types";
+import { EVENT_CATEGORY, CATEGORY_COLORS } from "@/lib/types";
 import { LogSummaryCharts } from "@/components/log/LogSummaryCharts";
 import { LogVolumeAreaChart } from "@/components/log/LogVolumeAreaChart";
 import { getLogPriority, priorityVisual } from "@/lib/log-priority";
@@ -39,9 +39,9 @@ interface Props {
 
 const LIVE_POOL_SIZE = 50;
 const SEED_ENTRY_COUNT = 18;
-const ROW_HEIGHT = 52;
+const ROW_HEIGHT = 34;
 const GRID =
-  "grid grid-cols-[44px_56px_minmax(140px,1fr)_minmax(0,1.5fr)_minmax(104px,128px)] gap-x-3 gap-y-0";
+  "grid grid-cols-[32px_44px_minmax(96px,1fr)_minmax(0,1.35fr)_minmax(72px,104px)] gap-x-1.5 gap-y-0";
 
 type LiveEntry = {
   streamId: string;
@@ -115,7 +115,7 @@ function HighlightText({ text, query }: { text: string; query: string }) {
         part.toLowerCase() === q.toLowerCase() ? (
           <mark
             key={i}
-            className="rounded-sm bg-amber-100 px-0.5 text-slate-900 [color:inherit]"
+            className="bg-amber-100 px-0.5 text-slate-900 [color:inherit]"
           >
             {part}
           </mark>
@@ -141,11 +141,11 @@ function PriorityDot({ event }: { event: string }) {
 
   return (
     <span
-      className="flex size-8 items-center justify-center"
+      className="flex size-6 items-center justify-center"
       title={`${title} priority`}
     >
       <span
-        className={`size-3 rounded-full ${dotBg} ${pulse} ring-2 ring-white`}
+        className={`size-2 rounded-full ${dotBg} ${pulse} ring-1 ring-white`}
         aria-hidden
       />
     </span>
@@ -228,22 +228,27 @@ export function LogTable({ rows }: Props) {
       if (cancelled || livePausedRef.current) return;
       const roll = Math.random();
       const wait =
-        roll < 0.11
-          ? randomBetween(220, 780)
-          : roll < 0.38
-            ? randomBetween(1200, 3200)
-            : randomBetween(2000, 5600);
+        roll < 0.45
+          ? randomBetween(25, 120)
+          : roll < 0.78
+            ? randomBetween(90, 280)
+            : randomBetween(200, 520);
       arm(() => {
         if (cancelled || livePausedRef.current) return;
         const r = Math.random();
-        const burst = r < 0.48 ? 1 : r < 0.8 ? 2 : r < 0.93 ? 3 : 4;
+        const burst =
+          r < 0.22
+            ? randomBetween(10, 16)
+            : r < 0.62
+              ? randomBetween(5, 10)
+              : randomBetween(3, 7);
         let n = 0;
         const runBurst = () => {
           if (cancelled || livePausedRef.current) return;
           emitOne();
           n += 1;
           if (n < burst) {
-            arm(runBurst, randomBetween(65, 420));
+            arm(runBurst, randomBetween(8, 45));
           } else {
             scheduleWave();
           }
@@ -260,6 +265,13 @@ export function LogTable({ rows }: Props) {
       timeouts.clear();
     };
   }, [livePool, livePaused]);
+
+  const newestStreamId = liveBuffer[0]?.streamId;
+  useEffect(() => {
+    const el = scrollParentRef.current;
+    if (!el || !newestStreamId) return;
+    el.scrollTop = 0;
+  }, [newestStreamId]);
 
   useEffect(() => {
     if (activeTab === "stream" && streamSectionRef.current) {
@@ -302,7 +314,8 @@ export function LogTable({ rows }: Props) {
     [filteredEntries]
   );
 
-  const sidebarChannels = useMemo(() => {
+  const channelMix = useMemo(() => {
+    if (liveBuffer.length === 0) return [];
     const byCat = new Map<string, number>();
     for (const e of liveBuffer) {
       const cat = EVENT_CATEGORY[e.row.event] ?? "pipeline";
@@ -313,6 +326,8 @@ export function LogTable({ rows }: Props) {
         id,
         count,
         label: CHANNEL_LABELS[id] ?? id,
+        pct: count / liveBuffer.length,
+        color: CATEGORY_COLORS[id] ?? "#64748b",
       }))
       .sort((a, b) => b.count - a.count);
   }, [liveBuffer]);
@@ -344,7 +359,7 @@ export function LogTable({ rows }: Props) {
     count: filteredEntries.length,
     getScrollElement: () => scrollParentRef.current,
     estimateSize: () => ROW_HEIGHT,
-    overscan: 8,
+    overscan: 24,
   });
 
   useEffect(() => {
@@ -380,7 +395,7 @@ export function LogTable({ rows }: Props) {
   const searchPending = searchInput !== deferredQuery;
 
   const lightBtn =
-    "inline-flex h-11 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 text-[15px] font-semibold text-slate-800 shadow-sm hover:bg-slate-50";
+    "inline-flex h-8 items-center gap-1 border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800 shadow-sm hover:bg-slate-50";
 
   return (
     <div className="min-h-screen bg-[#e8eaed] text-slate-900 antialiased">
@@ -392,8 +407,8 @@ export function LogTable({ rows }: Props) {
               Log operations
             </h1>
             <p className="mt-2 max-w-xl text-base leading-relaxed text-white/80">
-              Live tail cycles {livePool.length} sampled templates with randomized gaps and bursts
-              (not a fixed clock). Buffer holds up to {LIVE_POOL_SIZE} events.
+              High-rate tail: dense sub-second bursts, short pauses, and auto-scroll so the inbox
+              stays in motion. Buffer holds up to {LIVE_POOL_SIZE} events.
             </p>
           </div>
           <div className="flex flex-wrap items-end gap-8 lg:justify-end">
@@ -420,7 +435,7 @@ export function LogTable({ rows }: Props) {
             </div>
             <Link
               href="/"
-              className="rounded-lg border border-white/30 bg-white/10 px-4 py-2.5 text-[15px] font-semibold text-white hover:bg-white/20"
+              className="border border-white/30 bg-white/10 px-4 py-2.5 text-[15px] font-semibold text-white hover:bg-white/20"
             >
               ← Harbor overview
             </Link>
@@ -437,7 +452,7 @@ export function LogTable({ rows }: Props) {
               onClick={() => setActiveTab(tab.id)}
               className={`relative px-4 py-3.5 text-[15px] font-semibold transition-colors ${
                 activeTab === tab.id
-                  ? "text-slate-900 after:absolute after:bottom-0 after:left-4 after:right-4 after:h-0.5 after:rounded-full after:bg-[#b91c1c]"
+                  ? "text-slate-900 after:absolute after:bottom-0 after:left-4 after:right-4 after:h-0.5 after:bg-[#b91c1c]"
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
@@ -450,84 +465,152 @@ export function LogTable({ rows }: Props) {
       <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-8 lg:px-12">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           <aside className="lg:col-span-4">
-            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-4 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div className="border border-slate-300 bg-white shadow-sm lg:sticky lg:top-4 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+              <div className="flex items-start justify-between gap-2 border-b border-slate-200 bg-slate-50 px-3 py-3">
                 <div>
-                  <h2 className="text-base font-semibold text-slate-900">Pipeline overview</h2>
-                  <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                    Signals and channel mix for the current live buffer.
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-bold uppercase tracking-wide text-slate-900">
+                      Pipeline overview
+                    </h2>
+                    {!livePaused ? (
+                      <span className="border border-emerald-600 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800">
+                        Live
+                      </span>
+                    ) : (
+                      <span className="border border-slate-400 bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600">
+                        Paused
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-xs leading-snug text-slate-600">
+                    Buffer {liveBuffer.length}/{LIVE_POOL_SIZE} · {rows.length.toLocaleString()} lines
+                    on file
                   </p>
                 </div>
                 <button
                   type="button"
-                  className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                  className="border border-transparent p-1 text-slate-500 hover:border-slate-300 hover:bg-white hover:text-slate-800"
                   aria-label="Settings"
                 >
                   <Settings className="size-4" aria-hidden />
                 </button>
               </div>
 
-              <div className="border-b border-slate-100 py-4">
-                <h3 className="text-[13px] font-semibold uppercase tracking-wide text-slate-600">
-                  Signals
-                </h3>
-                <div className="mt-3 grid grid-cols-2 gap-3">
-                  <div className="rounded-md border border-red-100 bg-red-50/80 p-3">
-                  <p className="text-sm font-medium text-red-800/90">Critical</p>
-                  <p className="text-3xl font-semibold tabular-nums text-red-700">
+              <div className="border-b border-slate-200 px-3 py-3">
+                <div className="flex items-end justify-between gap-2">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                      Signals
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-600">Intervention pressure</p>
+                  </div>
+                </div>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <div className="border border-red-200 bg-red-50/90 p-2">
+                    <p className="text-[10px] font-bold uppercase text-red-800">Critical</p>
+                    <p className="text-xl font-bold tabular-nums text-red-700">
                       {signalStats.critical}
                     </p>
                   </div>
-                  <div className="rounded-md border border-amber-100 bg-amber-50/80 p-3">
-                    <p className="text-sm font-medium text-amber-900/80">Elevated</p>
-                    <p className="text-3xl font-semibold tabular-nums text-amber-800">
+                  <div className="border border-amber-200 bg-amber-50/90 p-2">
+                    <p className="text-[10px] font-bold uppercase text-amber-900">Elevated</p>
+                    <p className="text-xl font-bold tabular-nums text-amber-800">
                       {signalStats.elevated}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="border-b border-slate-100 py-4">
+              {channelMix.length > 0 ? (
+                <div className="border-b border-slate-200 px-3 py-3">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                    Channel mix
+                  </p>
+                  <div className="mt-2 flex h-3 w-full overflow-hidden border border-slate-200 divide-x divide-white/40">
+                    {channelMix.map((ch) => (
+                      <div
+                        key={ch.id}
+                        title={`${ch.label}: ${Math.round(ch.pct * 100)}%`}
+                        className="min-w-px"
+                        style={{
+                          flexGrow: ch.count,
+                          flexBasis: 0,
+                          backgroundColor: ch.color,
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-600">
+                    {channelMix.map((ch) => (
+                      <li key={ch.id} className="flex items-center gap-1">
+                        <span
+                          className="size-1.5 shrink-0 border border-slate-300"
+                          style={{ backgroundColor: ch.color }}
+                          aria-hidden
+                        />
+                        <span className="font-mono">
+                          {ch.label} {Math.round(ch.pct * 100)}%
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
+              <div className="border-b border-slate-200 px-3 py-2">
                 <button
                   type="button"
-                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 py-3 text-[15px] font-semibold text-slate-600 hover:border-slate-400 hover:bg-slate-50"
+                  className="flex w-full items-center justify-center gap-2 border border-dashed border-slate-300 bg-slate-50 py-2 text-xs font-semibold text-slate-600 hover:border-slate-400 hover:bg-white"
                 >
-                  <Plus className="size-4" aria-hidden />
+                  <Plus className="size-3.5" aria-hidden />
                   Add watch channel
                 </button>
               </div>
 
-              <div className="pt-4">
-                <h3 className="text-[13px] font-semibold uppercase tracking-wide text-slate-600">
-                  Channels
-                </h3>
-                {sidebarChannels.length === 0 ? (
-                  <p className="mt-3 text-[15px] text-slate-600">Waiting for live events…</p>
+              <div className="px-3 py-3">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                  By channel
+                </p>
+                {channelMix.length === 0 ? (
+                  <p className="mt-2 text-xs text-slate-600">Waiting for live events…</p>
                 ) : (
-                  <ul className="mt-3 divide-y divide-slate-100">
-                    {sidebarChannels.map((ch) => (
-                      <li key={ch.id} className="py-3 first:pt-0">
-                        <h4 className="text-[15px] font-semibold text-slate-900">{ch.label}</h4>
-                        <dl className="mt-2 space-y-1.5 text-[15px]">
-                          <div className="flex justify-between gap-4">
-                            <dt className="text-slate-600">Events</dt>
-                            <dd className="font-medium tabular-nums text-slate-900">{ch.count}</dd>
-                          </div>
-                          <div className="flex justify-between gap-4">
-                            <dt className="text-slate-600">Share</dt>
-                            <dd className="flex items-center gap-1 font-medium tabular-nums text-emerald-700">
-                              {liveBuffer.length
-                                ? `${Math.round((ch.count / liveBuffer.length) * 100)}%`
-                                : "—"}
-                              {liveBuffer.length > 0 && ch.count >= liveBuffer.length * 0.2 ? (
-                                <TrendingUp className="size-3.5 shrink-0" aria-hidden />
-                              ) : null}
-                            </dd>
-                          </div>
-                        </dl>
-                      </li>
-                    ))}
-                  </ul>
+                  <table className="mt-2 w-full border-collapse text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                        <th className="py-1 pr-2 font-bold">Channel</th>
+                        <th className="py-1 pr-2 text-right font-bold">N</th>
+                        <th className="py-1 text-right font-bold">%</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {channelMix.map((ch) => (
+                        <tr key={ch.id} className="border-b border-slate-100">
+                          <td className="py-1.5 pr-2">
+                            <div className="flex items-center gap-1.5 font-medium text-slate-900">
+                              <span
+                                className="size-1.5 shrink-0 border border-slate-300"
+                                style={{ backgroundColor: ch.color }}
+                                aria-hidden
+                              />
+                              {ch.label}
+                            </div>
+                          </td>
+                          <td className="py-1.5 pr-2 text-right font-mono tabular-nums text-slate-800">
+                            {ch.count}
+                          </td>
+                          <td className="py-1.5 text-right font-mono tabular-nums text-slate-700">
+                            {Math.round(ch.pct * 100)}
+                            {liveBuffer.length > 0 && ch.count >= liveBuffer.length * 0.2 ? (
+                              <TrendingUp
+                                className="ml-0.5 inline size-3 text-emerald-600"
+                                aria-hidden
+                              />
+                            ) : null}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 )}
               </div>
             </div>
@@ -537,16 +620,16 @@ export function LogTable({ rows }: Props) {
             {showStream ? (
               <section
                 ref={streamSectionRef}
-                className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+                className="overflow-hidden border border-slate-300 bg-white shadow-sm"
               >
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
                   <div>
-                    <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
+                    <h2 className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">
                       Activity
                     </h2>
-                    <p className="text-sm leading-relaxed text-slate-600">
-                      Search, filter, and export. New lines arrive in random bursts and pauses.
-                      Priority: green → yellow → orange → red; faster pulse = higher severity.
+                    <p className="text-xs leading-relaxed text-slate-600">
+                      Dense bursts (tens of ms). Inbox auto-scrolls to newest. Priority: green → yellow
+                      → orange → red.
                     </p>
                   </div>
                   <button
@@ -573,13 +656,13 @@ export function LogTable({ rows }: Props) {
                     <div className="min-w-0 flex-1 space-y-1.5">
                       <label
                         htmlFor="log-search"
-                        className="text-sm font-semibold text-slate-700"
+                        className="text-xs font-bold text-slate-700"
                       >
                         Search log
                       </label>
                       <div className="relative">
                         <Search
-                          className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400"
+                          className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-slate-400"
                           aria-hidden
                         />
                         <input
@@ -591,15 +674,15 @@ export function LogTable({ rows }: Props) {
                           placeholder="Timestamp, event, API key, or metadata…"
                           value={searchInput}
                           onChange={(e) => setSearchInput(e.target.value)}
-                          className="h-11 w-full rounded-lg border border-slate-300 bg-white pl-10 pr-24 text-[15px] text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#b91c1c] focus:ring-2 focus:ring-[#b91c1c]/25"
+                          className="h-8 w-full border border-slate-300 bg-white pl-9 pr-20 text-xs text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#b91c1c] focus:ring-1 focus:ring-[#b91c1c]/30"
                         />
                         <div className="pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-2 text-xs text-slate-400">
                           {searchPending ? (
-                            <span className="pointer-events-auto rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 font-mono text-[10px]">
+                            <span className="pointer-events-auto border border-slate-200 bg-slate-100 px-1.5 py-0.5 font-mono text-[10px]">
                               …
                             </span>
                           ) : null}
-                          <span className="hidden items-center gap-1 rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-mono text-[10px] sm:inline-flex">
+                          <span className="hidden items-center gap-1 border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-mono text-[10px] sm:inline-flex">
                             <Keyboard className="size-3" aria-hidden />
                             K
                           </span>
@@ -608,7 +691,7 @@ export function LogTable({ rows }: Props) {
                           <button
                             type="button"
                             onClick={() => setSearchInput("")}
-                            className="absolute right-14 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 sm:right-[5.5rem]"
+                            className="absolute right-12 top-1/2 -translate-y-1/2 border border-transparent p-1 text-slate-400 hover:border-slate-200 hover:bg-slate-100 hover:text-slate-700 sm:right-[4.5rem]"
                             aria-label="Clear search"
                           >
                             <X className="size-4" />
@@ -621,7 +704,7 @@ export function LogTable({ rows }: Props) {
                       <div className="space-y-2">
                         <span
                           id="log-event-filter-label"
-                          className="block text-sm font-semibold text-slate-700"
+                          className="block text-xs font-bold text-slate-700"
                         >
                           Event type
                         </span>
@@ -634,18 +717,18 @@ export function LogTable({ rows }: Props) {
                           <SelectTrigger
                             id="log-event-filter"
                             aria-labelledby="log-event-filter-label"
-                            className="h-11 min-w-0 w-full max-w-md border-slate-200 bg-white text-left text-[15px] font-medium text-slate-900 shadow-sm hover:border-slate-300 hover:bg-slate-50/90 focus-visible:border-[#b91c1c] focus-visible:ring-2 focus-visible:ring-[#b91c1c]/25 data-[size=default]:h-11 sm:min-w-[280px] dark:bg-white dark:hover:bg-slate-50"
+                            className="h-8 min-w-0 w-full max-w-md border-slate-300 bg-white text-left text-xs font-medium text-slate-900 shadow-sm hover:border-slate-400 hover:bg-slate-50 focus-visible:border-[#b91c1c] focus-visible:ring-1 focus-visible:ring-[#b91c1c]/30 data-[size=default]:h-8 sm:min-w-[220px] dark:bg-white dark:hover:bg-slate-50"
                           >
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent
                             align="start"
                             sideOffset={8}
-                            className="max-h-72 min-w-[var(--anchor-width)] rounded-xl border border-slate-200 bg-white p-1.5 text-slate-900 shadow-xl ring-1 ring-slate-900/10 dark:bg-white dark:text-slate-900"
+                            className="max-h-72 min-w-[var(--anchor-width)] border border-slate-300 bg-white p-0.5 text-slate-900 shadow-lg dark:bg-white dark:text-slate-900"
                           >
                             <SelectItem
                               value="__all__"
-                              className="cursor-pointer rounded-lg py-2.5 pl-3 pr-8 text-[15px] font-semibold text-slate-800 focus:bg-slate-100"
+                              className="cursor-pointer py-1.5 pl-2 pr-7 text-xs font-semibold text-slate-800 focus:bg-slate-100"
                             >
                               All events
                             </SelectItem>
@@ -653,7 +736,7 @@ export function LogTable({ rows }: Props) {
                               <SelectItem
                                 key={t}
                                 value={t}
-                                className="cursor-pointer rounded-lg py-2.5 pl-3 pr-8 text-left font-mono text-[13px] leading-snug text-slate-800 focus:bg-slate-100"
+                                className="cursor-pointer py-1.5 pl-2 pr-7 text-left font-mono text-[11px] leading-snug text-slate-800 focus:bg-slate-100"
                               >
                                 <span className="line-clamp-3 break-all">{t}</span>
                               </SelectItem>
@@ -667,8 +750,8 @@ export function LogTable({ rows }: Props) {
                     </div>
                   </div>
 
-                  <p className="text-sm text-slate-600">
-                    <span className="font-semibold tabular-nums text-slate-900">
+                  <p className="text-xs text-slate-600">
+                    <span className="font-bold tabular-nums text-slate-900">
                       {filteredEntries.length.toLocaleString()}
                     </span>{" "}
                     in view · pool {livePool.length} templates from {rows.length.toLocaleString()}{" "}
@@ -687,7 +770,7 @@ export function LogTable({ rows }: Props) {
                       aria-label="Live event log"
                     >
                       <div
-                        className={`${GRID} border-b border-slate-200 bg-slate-50 px-2 py-3 text-left text-[13px] font-semibold uppercase tracking-wide text-slate-600`}
+                        className={`${GRID} border-b border-slate-200 bg-slate-100 px-1.5 py-2 text-left text-[10px] font-bold uppercase tracking-wide text-slate-600`}
                       >
                         <span className="sr-only">Priority</span>
                         <span aria-hidden className="block w-6" />
@@ -716,7 +799,7 @@ export function LogTable({ rows }: Props) {
                                   s?.streamId === entry.streamId ? null : entry
                                 )
                               }
-                              className={`${GRID} ${stripe} absolute left-0 right-0 w-full border-b border-slate-100 px-2 py-0 text-left transition-colors hover:bg-slate-50 ${
+                              className={`${GRID} ${stripe} absolute left-0 right-0 w-full border-b border-slate-100 px-1.5 py-0 text-left transition-colors hover:bg-slate-50 ${
                                 isSelected ? "bg-slate-100" : "bg-white"
                               }`}
                               style={{
@@ -725,18 +808,18 @@ export function LogTable({ rows }: Props) {
                               }}
                             >
                               <PriorityDot event={row.event} />
-                              <span className="flex items-center font-mono text-sm font-medium tabular-nums text-slate-600">
+                              <span className="flex items-center font-mono text-[10px] font-semibold tabular-nums text-slate-500">
                                 {entry.liveSeq}
                               </span>
-                              <span className="flex items-center font-mono text-sm font-medium leading-snug text-slate-800">
+                              <span className="flex items-center font-mono text-[10px] font-medium leading-tight text-slate-800">
                                 <HighlightText text={row.timestamp} query={queryForHighlight} />
                               </span>
                               <span className="flex min-w-0 items-center">
-                                <span className="truncate rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 font-mono text-[13px] font-medium leading-snug text-slate-900">
+                                <span className="truncate border border-slate-200 bg-slate-50 px-1 py-0.5 font-mono text-[10px] font-medium leading-tight text-slate-900">
                                   <HighlightText text={row.event} query={queryForHighlight} />
                                 </span>
                               </span>
-                              <span className="flex items-center font-mono text-xs font-medium text-slate-600">
+                              <span className="flex items-center font-mono text-[10px] font-medium text-slate-600">
                                 <HighlightText
                                   text={
                                     row.apiKey.length > 14
@@ -795,13 +878,13 @@ export function LogTable({ rows }: Props) {
                         </dl>
                         <div>
                           <h4 className="text-xs font-semibold text-slate-500">Metadata</h4>
-                          <pre className="mt-2 max-h-[min(36vh,320px)] overflow-auto rounded-md border border-slate-200 bg-white p-3 text-[11px] leading-relaxed text-slate-800">
+                          <pre className="mt-2 max-h-[min(36vh,320px)] overflow-auto border border-slate-200 bg-white p-2 text-[10px] leading-relaxed text-slate-800">
                             {JSON.stringify(selected.row.meta, null, 2)}
                           </pre>
                         </div>
                         <button
                           type="button"
-                          className="w-full rounded-md border border-slate-300 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                          className="w-full border border-slate-300 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
                           onClick={() => setSelected(null)}
                         >
                           Close detail
@@ -819,7 +902,7 @@ export function LogTable({ rows }: Props) {
             ) : null}
 
             {showCharts ? (
-              <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
+              <section className="border border-slate-300 bg-white shadow-sm">
                 <div className="border-b border-slate-100 px-5 py-4">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
@@ -864,7 +947,7 @@ export function LogTable({ rows }: Props) {
                 </div>
                 <div className="border-b border-slate-100 px-2 pb-2">
                   <p className="px-3 pt-3 text-sm font-semibold text-slate-600">
-                    <span className="mr-2 inline-block size-2 rounded-full bg-emerald-600" />
+                    <span className="mr-2 inline-block size-2 border border-emerald-800 bg-emerald-600" />
                     Event volume (visible window)
                   </p>
                   <LogVolumeAreaChart rows={chartRows} />

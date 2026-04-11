@@ -58,16 +58,16 @@ function colorForEventType(eventKey: string, index: number): string {
 
 export function LogSummaryCharts({ rows, lightSurface }: Props) {
   const card = lightSurface
-    ? "rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+    ? "border border-slate-300 bg-white p-4 shadow-sm"
     : "rounded-lg border border-border bg-card p-4";
   const title = lightSurface
     ? "text-xs font-medium uppercase tracking-wide text-slate-500"
     : "text-xs font-medium uppercase tracking-wide text-muted-foreground";
   const empty = lightSurface
-    ? "rounded-lg border border-slate-200 bg-white px-4 py-8 text-center text-sm text-slate-500 shadow-sm"
+    ? "border border-slate-300 bg-white px-4 py-8 text-center text-sm text-slate-500 shadow-sm"
     : "rounded-lg border border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground";
   const tip = lightSurface
-    ? "rounded-md border border-slate-200 bg-white px-2.5 py-2 text-xs shadow-md"
+    ? "border border-slate-300 bg-white px-2.5 py-2 text-xs shadow-md"
     : "rounded-md border border-border bg-card px-2.5 py-2 text-xs shadow-sm";
   const tipMuted = lightSurface ? "mt-1 text-slate-600" : "mt-1 text-muted-foreground";
   const tipTitle = lightSurface ? "font-mono text-[10px] text-slate-800" : "font-mono text-[10px] text-foreground";
