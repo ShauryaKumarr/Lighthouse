@@ -8,32 +8,29 @@ export default function LogPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center space-y-4">
-          <div className="h-12 w-12 mx-auto rounded-full bg-beacon/20 animate-beacon-pulse" />
-          <p className="text-muted-foreground text-sm">Loading log data...</p>
-        </div>
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <p className="text-sm text-muted-foreground">Loading log data…</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <p className="text-destructive">Error: {error}</p>
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <p className="text-sm text-destructive">Error: {error}</p>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Lighthouse Log</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Full event log from the Inhibitor audit. Search, filter by event type,
-          and click any row to expand its metadata.
+    <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+      <header className="space-y-1 border-b border-border pb-6">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Lighthouse log</h1>
+        <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          Browse the full Inhibitor event log. Use search and event filters to narrow results; charts
+          reflect the filtered set. Select a row to read metadata in the detail panel.
         </p>
-      </div>
+      </header>
       <LogTable rows={rawRows} />
     </div>
   );

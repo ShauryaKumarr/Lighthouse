@@ -1,31 +1,66 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
 import {
-  useReactTable,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  flexRender,
-  createColumnHelper,
-  type ColumnFiltersState,
-} from "@tanstack/react-table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+  useEffect,
+  useDeferredValue,
+} from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { Search, X, Keyboard } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { RawLogRow } from "@/lib/types";
-import { EVENT_CATEGORY, CATEGORY_COLORS } from "@/lib/types";
+import { LogSummaryCharts } from "@/components/log/LogSummaryCharts";
 
 interface Props {
   rows: RawLogRow[];
 }
 
-const columnHelper = createColumnHelper<RawLogRow>();
+const ROW_HEIGHT = 48;
+const GRID =
+  "grid grid-cols-[52px_minmax(128px,1fr)_minmax(0,1.4fr)_minmax(96px,120px)] gap-x-3 gap-y-0";
+
+function escapeRegExp(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function HighlightText({ text, query }: { text: string; query: string }) {
+  const q = query.trim();
+  if (!q) return <>{text}</>;
+  let parts: string[];
+  try {
+    const re = new RegExp(`(${escapeRegExp(q)})`, "gi");
+    parts = text.split(re);
+  } catch {
+    return <>{text}</>;
+  }
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === q.toLowerCase() ? (
+          <mark
+            key={i}
+            className="rounded-sm bg-muted px-0.5 text-foreground [color:inherit]"
+          >
+            {part}
+          </mark>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </>
+  );
+}
 
 export function LogTable({ rows }: Props) {
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [eventFilter, setEventFilter] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const deferredQuery = useDeferredValue(searchInput);
+  const [selected, setSelected] = useState<RawLogRow | null>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const scrollParentRef = useRef<HTMLDivElement>(null);
 
   const eventTypes = useMemo(() => {
     const types = new Set<string>();
@@ -38,81 +73,38 @@ export function LogTable({ rows }: Props) {
     if (eventFilter) {
       result = result.filter((r) => r.event === eventFilter);
     }
-    if (searchTerm) {
-      const lower = searchTerm.toLowerCase();
+    const q = deferredQuery.trim().toLowerCase();
+    if (q) {
       result = result.filter(
         (r) =>
-          r.event.toLowerCase().includes(lower) ||
-          r.apiKey.toLowerCase().includes(lower) ||
-          r.timestamp.toLowerCase().includes(lower) ||
-          JSON.stringify(r.meta).toLowerCase().includes(lower)
+          r.event.toLowerCase().includes(q) ||
+          r.apiKey.toLowerCase().includes(q) ||
+          r.timestamp.toLowerCase().includes(q) ||
+          JSON.stringify(r.meta).toLowerCase().includes(q)
       );
     }
     return result;
-  }, [rows, eventFilter, searchTerm]);
+  }, [rows, eventFilter, deferredQuery]);
 
-  const columns = useMemo(
-    () => [
-      columnHelper.accessor("index", {
-        header: "#",
-        cell: (info) => (
-          <span className="font-mono text-xs text-muted-foreground">
-            {info.getValue()}
-          </span>
-        ),
-        size: 60,
-      }),
-      columnHelper.accessor("timestamp", {
-        header: "Timestamp",
-        cell: (info) => (
-          <span className="font-mono text-xs">{info.getValue()}</span>
-        ),
-        size: 200,
-      }),
-      columnHelper.accessor("event", {
-        header: "Event",
-        cell: (info) => {
-          const event = info.getValue();
-          const cat = EVENT_CATEGORY[event] ?? "pipeline";
-          const color = CATEGORY_COLORS[cat] ?? "#6b7280";
-          return (
-            <Badge
-              variant="outline"
-              className="text-xs font-mono"
-              style={{ borderColor: color, color }}
-            >
-              {event}
-            </Badge>
-          );
-        },
-        size: 300,
-      }),
-      columnHelper.accessor("apiKey", {
-        header: "API Key",
-        cell: (info) => {
-          const key = info.getValue();
-          return (
-            <span className="font-mono text-xs text-muted-foreground">
-              {key.length > 16 ? `${key.slice(0, 8)}...${key.slice(-4)}` : key}
-            </span>
-          );
-        },
-        size: 140,
-      }),
-    ],
-    []
-  );
-
-  const table = useReactTable({
-    data: filteredRows,
-    columns,
-    state: { columnFilters },
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: { pagination: { pageSize: 50 } },
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual scroll state is intentionally non-memoizable
+  const rowVirtualizer = useVirtualizer({
+    count: filteredRows.length,
+    getScrollElement: () => scrollParentRef.current,
+    estimateSize: () => ROW_HEIGHT,
+    overscan: 12,
   });
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        searchRef.current?.focus();
+        searchRef.current?.select();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const exportCsv = useCallback(() => {
     const header = "index,timestamp,apiKey,event,meta";
@@ -131,125 +123,214 @@ export function LogTable({ rows }: Props) {
     URL.revokeObjectURL(url);
   }, [filteredRows]);
 
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <CardTitle className="text-base">Event Log</CardTitle>
-          <div className="flex items-center gap-2 flex-wrap">
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="h-8 rounded-md border border-border bg-background px-3 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-beacon w-48"
-            />
-            <select
-              value={eventFilter}
-              onChange={(e) => setEventFilter(e.target.value)}
-              className="h-8 rounded-md border border-border bg-background px-2 text-xs focus:outline-none focus:ring-1 focus:ring-beacon"
-            >
-              <option value="">All events</option>
-              {eventTypes.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={exportCsv}
-              className="h-8 rounded-md bg-beacon/10 border border-beacon/30 px-3 text-xs font-medium text-beacon hover:bg-beacon/20 transition-colors"
-            >
-              Export CSV
-            </button>
-          </div>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Showing {filteredRows.length.toLocaleString()} of{" "}
-          {rows.length.toLocaleString()} events
-        </p>
-      </CardHeader>
-      <CardContent className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="border-b border-border">
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="py-2 px-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
-                  >
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                  </th>
-                ))}
-                <th className="py-2 px-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Meta
-                </th>
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map((row) => {
-              const isExpanded = expandedRow === row.original.index;
-              return (
-                <tr
-                  key={row.id}
-                  className="border-b border-border/50 hover:bg-muted/20 cursor-pointer transition-colors"
-                  onClick={() =>
-                    setExpandedRow(isExpanded ? null : row.original.index)
-                  }
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="py-2 px-3">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </td>
-                  ))}
-                  <td className="py-2 px-3">
-                    {isExpanded ? (
-                      <pre className="text-[10px] font-mono text-muted-foreground whitespace-pre-wrap break-all max-w-md">
-                        {JSON.stringify(row.original.meta, null, 2)}
-                      </pre>
-                    ) : (
-                      <span className="text-xs text-muted-foreground/60 font-mono truncate block max-w-[200px]">
-                        {JSON.stringify(row.original.meta).slice(0, 60)}...
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+  const queryForHighlight = deferredQuery.trim();
+  const searchPending = searchInput !== deferredQuery;
 
-        <div className="flex items-center justify-between pt-4">
-          <div className="text-xs text-muted-foreground">
-            Page {table.getState().pagination.pageIndex + 1} of{" "}
-            {table.getPageCount()}
+  return (
+    <div className="space-y-6">
+      <LogSummaryCharts rows={filteredRows} />
+
+      <div className="rounded-lg border border-border bg-card">
+        <div className="border-b border-border p-4 space-y-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div className="space-y-1.5 min-w-0 flex-1">
+              <label htmlFor="log-search" className="text-xs font-medium text-muted-foreground">
+                Search log
+              </label>
+              <div className="relative">
+                <Search
+                  className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                  aria-hidden
+                />
+                <input
+                  ref={searchRef}
+                  id="log-search"
+                  type="search"
+                  autoComplete="off"
+                  spellCheck={false}
+                  placeholder="Timestamp, event, API key, or metadata…"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  className="h-10 w-full rounded-md border border-input bg-background pl-10 pr-24 text-sm outline-none transition-[box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
+                />
+                <div className="pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-2 text-xs text-muted-foreground">
+                  {searchPending ? (
+                    <span className="pointer-events-auto rounded border border-border bg-muted/60 px-1.5 py-0.5 font-mono text-[10px]">
+                      …
+                    </span>
+                  ) : null}
+                  <span
+                    className="hidden items-center gap-1 rounded border border-border bg-muted/40 px-1.5 py-0.5 font-mono text-[10px] sm:inline-flex"
+                    title="Focus search"
+                  >
+                    <Keyboard className="size-3" aria-hidden />
+                    K
+                  </span>
+                </div>
+                {searchInput ? (
+                  <button
+                    type="button"
+                    onClick={() => setSearchInput("")}
+                    className="absolute right-14 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground sm:right-[5.5rem]"
+                    aria-label="Clear search"
+                  >
+                    <X className="size-4" />
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="space-y-1.5">
+                <label htmlFor="log-event-filter" className="text-xs font-medium text-muted-foreground">
+                  Event type
+                </label>
+                <select
+                  id="log-event-filter"
+                  value={eventFilter}
+                  onChange={(e) => setEventFilter(e.target.value)}
+                  className="h-10 min-w-[200px] rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
+                >
+                  <option value="">All events</option>
+                  {eventTypes.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <Button type="button" variant="outline" size="sm" className="h-10" onClick={exportCsv}>
+                Export CSV
+              </Button>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-              className="h-7 rounded-md border border-border px-3 text-xs disabled:opacity-30 hover:bg-muted/30 transition-colors"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-              className="h-7 rounded-md border border-border px-3 text-xs disabled:opacity-30 hover:bg-muted/30 transition-colors"
-            >
-              Next
-            </button>
-          </div>
+
+          <p className="text-xs text-muted-foreground">
+            Showing{" "}
+            <span className="font-medium tabular-nums text-foreground">
+              {filteredRows.length.toLocaleString()}
+            </span>{" "}
+            of {rows.length.toLocaleString()} events
+            {searchPending ? " · updating results…" : null}
+          </p>
         </div>
-      </CardContent>
-    </Card>
+
+        <div className="lg:grid lg:grid-cols-[1fr_minmax(260px,34%)] lg:gap-0 lg:divide-x lg:divide-border">
+          <div className="min-w-0">
+            <div
+              ref={scrollParentRef}
+              className="max-h-[min(70vh,720px)] overflow-auto overscroll-contain"
+              role="region"
+              aria-label="Scrollable event log"
+            >
+              <div className={`${GRID} border-b border-border bg-muted/30 px-3 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground`}>
+                <span>#</span>
+                <span>Time</span>
+                <span>Event</span>
+                <span>API key</span>
+              </div>
+              <div
+                className="relative w-full"
+                style={{ height: rowVirtualizer.getTotalSize() }}
+              >
+                {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                  const row = filteredRows[virtualRow.index];
+                  const isSelected = selected?.index === row.index;
+                  return (
+                    <button
+                      key={row.index}
+                      type="button"
+                      data-index={virtualRow.index}
+                      onClick={() =>
+                        setSelected((s) => (s?.index === row.index ? null : row))
+                      }
+                      className={`${GRID} absolute left-0 right-0 w-full border-b border-border px-3 py-0 text-left transition-colors hover:bg-muted/40 ${
+                        isSelected ? "bg-muted/60" : "bg-card"
+                      }`}
+                      style={{
+                        height: virtualRow.size,
+                        transform: `translateY(${virtualRow.start}px)`,
+                      }}
+                    >
+                      <span className="flex items-center font-mono text-xs text-muted-foreground">
+                        {row.index}
+                      </span>
+                      <span className="flex items-center font-mono text-[11px] leading-tight text-foreground/90">
+                        <HighlightText text={row.timestamp} query={queryForHighlight} />
+                      </span>
+                      <span className="flex min-w-0 items-center">
+                        <span className="truncate rounded border border-border bg-background px-2 py-0.5 font-mono text-[11px] text-foreground/90">
+                          <HighlightText text={row.event} query={queryForHighlight} />
+                        </span>
+                      </span>
+                      <span className="flex items-center font-mono text-[11px] text-muted-foreground">
+                        <HighlightText
+                          text={
+                            row.apiKey.length > 14
+                              ? `${row.apiKey.slice(0, 6)}…${row.apiKey.slice(-4)}`
+                              : row.apiKey
+                          }
+                          query={queryForHighlight}
+                        />
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <aside className="border-t border-border bg-muted/10 p-4 lg:border-t-0 lg:max-h-[min(70vh,720px)] lg:overflow-auto">
+            {selected ? (
+              <div className="space-y-3">
+                <div>
+                  <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Row detail
+                  </h3>
+                  <dl className="mt-2 space-y-2 text-sm">
+                    <div>
+                      <dt className="text-xs text-muted-foreground">Index</dt>
+                      <dd className="font-mono text-xs">{selected.index}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-muted-foreground">Timestamp</dt>
+                      <dd className="break-all font-mono text-xs">{selected.timestamp}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-muted-foreground">Event</dt>
+                      <dd className="break-all font-mono text-xs">{selected.event}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-muted-foreground">API key</dt>
+                      <dd className="break-all font-mono text-xs">{selected.apiKey}</dd>
+                    </div>
+                  </dl>
+                </div>
+                <div>
+                  <h4 className="text-xs font-medium text-muted-foreground">Metadata</h4>
+                  <pre className="mt-2 max-h-[min(40vh,360px)] overflow-auto rounded-md border border-border bg-background p-3 text-[11px] leading-relaxed text-foreground/90">
+                    {JSON.stringify(selected.meta, null, 2)}
+                  </pre>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setSelected(null)}
+                >
+                  Close detail
+                </Button>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Select a row to inspect full metadata. Scroll the list to browse all matching
+                events—no page buttons.
+              </p>
+            )}
+          </aside>
+        </div>
+      </div>
+    </div>
   );
 }
