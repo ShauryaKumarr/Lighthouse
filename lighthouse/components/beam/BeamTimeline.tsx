@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Tooltip,
   TooltipContent,
@@ -13,6 +12,15 @@ import { EVENT_CATEGORY, CATEGORY_COLORS } from "@/lib/types";
 interface Props {
   lifecycle: RequestLifecycle;
 }
+
+const CATEGORY_LABELS: Record<string, string> = {
+  embedding: "Embedding",
+  llm: "LLM",
+  rules: "Rules",
+  observation: "Observation",
+  prediction: "Prediction",
+  pipeline: "Pipeline",
+};
 
 export function BeamTimeline({ lifecycle }: Props) {
   const { bars, totalMs } = useMemo(() => {
@@ -66,58 +74,68 @@ export function BeamTimeline({ lifecycle }: Props) {
   }, [bars]);
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">Pipeline Waterfall</CardTitle>
-        <p className="text-xs text-muted-foreground">
-          Total duration: {(totalMs / 1000).toFixed(2)}s &middot;{" "}
-          {lifecycle.events.length} events
-        </p>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
+    <div className="rounded-2xl border border-border/60 bg-card/50 backdrop-blur-sm overflow-hidden">
+      <div className="px-5 py-3 border-b border-border/40 flex items-center justify-between">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Pipeline Waterfall
+        </span>
+        <span className="text-xs text-muted-foreground font-mono">
+          {(totalMs / 1000).toFixed(2)}s &middot; {lifecycle.events.length}{" "}
+          events
+        </span>
+      </div>
+
+      <div className="px-5 py-5">
+        <div className="space-y-3">
           {categories.map((cat) => {
             const catBars = groupedBars[cat];
             if (!catBars || catBars.length === 0) return null;
             return (
-              <div key={cat} className="flex items-center gap-3">
-                <span
-                  className="w-24 text-right text-xs font-medium capitalize shrink-0"
-                  style={{ color: CATEGORY_COLORS[cat] }}
-                >
-                  {cat}
-                </span>
-                <div className="relative flex-1 h-6 rounded bg-muted/30">
+              <div key={cat} className="flex items-center gap-4">
+                <div className="w-24 shrink-0 flex items-center gap-2">
+                  <div
+                    className="h-2 w-2 rounded-full shrink-0"
+                    style={{ backgroundColor: CATEGORY_COLORS[cat] }}
+                  />
+                  <span className="text-xs font-medium text-foreground/70">
+                    {CATEGORY_LABELS[cat] ?? cat}
+                  </span>
+                </div>
+                <div className="relative flex-1 h-7 rounded-lg bg-muted/20">
                   {catBars.map((bar, i) => {
                     const left = (bar.offset / totalMs) * 100;
                     const width = Math.max(
                       (bar.duration / totalMs) * 100,
-                      0.3
+                      0.4
                     );
                     return (
                       <Tooltip key={i}>
                         <TooltipTrigger
-                          className="absolute top-0.5 h-5 rounded-sm opacity-80 hover:opacity-100 transition-opacity cursor-pointer"
+                          className="absolute top-1 h-5 rounded-md opacity-70 hover:opacity-100 transition-all hover:scale-y-110 cursor-pointer"
                           style={{
                             left: `${left}%`,
                             width: `${width}%`,
                             backgroundColor: bar.color,
-                            minWidth: "2px",
+                            minWidth: "3px",
                           }}
                         />
                         <TooltipContent
                           side="top"
-                          className="bg-navy text-fog border-ocean text-xs max-w-xs"
+                          className="bg-card border-border text-xs max-w-xs shadow-lg"
                         >
-                          <p className="font-semibold">{bar.event}</p>
-                          <p className="text-fog/70">
-                            {new Date(bar.timestamp).toISOString().split("T")[1]}
+                          <p className="font-semibold text-foreground">
+                            {bar.event.replace(/_/g, " ")}
+                          </p>
+                          <p className="text-muted-foreground font-mono mt-0.5">
+                            {new Date(bar.timestamp)
+                              .toISOString()
+                              .split("T")[1]}
                           </p>
                           {bar.meta &&
                             Object.keys(bar.meta).length > 0 &&
                             (bar.meta as Record<string, unknown>)._raw ===
                               undefined && (
-                              <pre className="mt-1 text-[10px] text-fog/60 whitespace-pre-wrap break-all">
+                              <pre className="mt-1.5 text-[10px] text-muted-foreground whitespace-pre-wrap break-all bg-muted/30 rounded p-1.5">
                                 {JSON.stringify(bar.meta, null, 1)}
                               </pre>
                             )}
@@ -126,25 +144,54 @@ export function BeamTimeline({ lifecycle }: Props) {
                     );
                   })}
                 </div>
+                <span className="text-[10px] text-muted-foreground font-mono w-8 text-right shrink-0">
+                  {catBars.length}
+                </span>
               </div>
             );
           })}
         </div>
 
-        <div className="flex flex-wrap gap-3 mt-4 pt-3 border-t border-border">
-          {categories.map((cat) => (
-            <div key={cat} className="flex items-center gap-1.5">
-              <div
-                className="h-2.5 w-2.5 rounded-sm"
-                style={{ backgroundColor: CATEGORY_COLORS[cat] }}
-              />
-              <span className="text-xs text-muted-foreground capitalize">
-                {cat}
-              </span>
-            </div>
-          ))}
+        {/* Time axis markers */}
+        <div className="flex items-center mt-4 ml-28 mr-8">
+          <div className="flex-1 relative h-px bg-border/40">
+            <span className="absolute left-0 -top-4 text-[10px] text-muted-foreground font-mono">
+              0s
+            </span>
+            <span className="absolute left-1/4 -top-4 text-[10px] text-muted-foreground font-mono -translate-x-1/2">
+              {(totalMs / 4000).toFixed(1)}s
+            </span>
+            <span className="absolute left-1/2 -top-4 text-[10px] text-muted-foreground font-mono -translate-x-1/2">
+              {(totalMs / 2000).toFixed(1)}s
+            </span>
+            <span className="absolute left-3/4 -top-4 text-[10px] text-muted-foreground font-mono -translate-x-1/2">
+              {((totalMs * 3) / 4000).toFixed(1)}s
+            </span>
+            <span className="absolute right-0 -top-4 text-[10px] text-muted-foreground font-mono">
+              {(totalMs / 1000).toFixed(1)}s
+            </span>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+
+        {/* Legend */}
+        <div className="flex flex-wrap gap-4 mt-6 pt-4 border-t border-border/30">
+          {categories.map((cat) => {
+            const count = groupedBars[cat]?.length ?? 0;
+            if (count === 0) return null;
+            return (
+              <div key={cat} className="flex items-center gap-1.5">
+                <div
+                  className="h-2 w-2 rounded-full"
+                  style={{ backgroundColor: CATEGORY_COLORS[cat] }}
+                />
+                <span className="text-xs text-muted-foreground">
+                  {CATEGORY_LABELS[cat] ?? cat}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
