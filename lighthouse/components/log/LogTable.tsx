@@ -25,6 +25,7 @@ import { EVENT_CATEGORY, CATEGORY_COLORS } from "@/lib/types";
 import { LogSummaryCharts } from "@/components/log/LogSummaryCharts";
 import { LogVolumeAreaChart } from "@/components/log/LogVolumeAreaChart";
 import { getLogPriority, priorityVisual } from "@/lib/log-priority";
+import { buildDemoThroughputRows } from "@/lib/demo-throughput-rows";
 import {
   Select,
   SelectContent,
@@ -314,6 +315,11 @@ export function LogTable({ rows }: Props) {
     [filteredEntries]
   );
 
+  const throughputChartRows = useMemo(
+    () => [...buildDemoThroughputRows(), ...chartRows],
+    [chartRows]
+  );
+
   const channelMix = useMemo(() => {
     if (liveBuffer.length === 0) return [];
     const byCat = new Map<string, number>();
@@ -344,12 +350,15 @@ export function LogTable({ rows }: Props) {
   }, [liveBuffer]);
 
   const throughputLabel = useMemo(() => {
-    if (liveBuffer.length < 2) return "—";
-    const t0 = new Date(liveBuffer[liveBuffer.length - 1].row.timestamp).getTime();
-    const t1 = new Date(liveBuffer[0].row.timestamp).getTime();
+    if (throughputChartRows.length < 2) return "—";
+    const sorted = [...throughputChartRows].sort(
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+    const t0 = new Date(sorted[0].timestamp).getTime();
+    const t1 = new Date(sorted[sorted.length - 1].timestamp).getTime();
     const mins = Math.max(1 / 60, (t1 - t0) / 60000);
-    return `${Math.round(liveBuffer.length / mins)} / min`;
-  }, [liveBuffer]);
+    return `${Math.round(throughputChartRows.length / mins)} / min`;
+  }, [throughputChartRows]);
 
   const showStream = activeTab !== "analytics";
   const showCharts = activeTab !== "stream";
@@ -398,7 +407,7 @@ export function LogTable({ rows }: Props) {
     "inline-flex h-8 items-center gap-1 border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800 shadow-sm hover:bg-slate-50";
 
   return (
-    <div className="min-h-screen bg-[#e8eaed] text-slate-900 antialiased">
+    <div className="min-h-screen bg-[#2e2e32] text-slate-900 antialiased">
       <header className="bg-gradient-to-r from-[#4a0d18] via-[#6b1024] to-[#8b1538] px-4 py-8 text-white sm:px-8 lg:px-12">
         <div className="mx-auto flex max-w-[1400px] flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -443,7 +452,7 @@ export function LogTable({ rows }: Props) {
         </div>
       </header>
 
-      <nav className="border-b border-slate-200 bg-white">
+      <nav className="border-b border-zinc-700 bg-[#262629]">
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-stretch gap-1 px-4 sm:px-8 lg:px-12">
           {TABS.map((tab) => (
             <button
@@ -452,8 +461,8 @@ export function LogTable({ rows }: Props) {
               onClick={() => setActiveTab(tab.id)}
               className={`relative px-4 py-3.5 text-[15px] font-semibold transition-colors ${
                 activeTab === tab.id
-                  ? "text-slate-900 after:absolute after:bottom-0 after:left-4 after:right-4 after:h-0.5 after:bg-[#b91c1c]"
-                  : "text-slate-500 hover:text-slate-800"
+                  ? "text-zinc-50 after:absolute after:bottom-0 after:left-4 after:right-4 after:h-0.5 after:bg-[#e85d5d]"
+                  : "text-zinc-400 hover:text-zinc-200"
               }`}
             >
               {tab.label}
@@ -926,7 +935,7 @@ export function LogTable({ rows }: Props) {
                   </div>
                   <dl className="mt-4 grid grid-cols-2 gap-4 border-t border-slate-100 pt-4 text-[15px] sm:grid-cols-3">
                     <div>
-                      <dt className="text-slate-600">In view</dt>
+                      <dt className="text-slate-600">In view (inbox)</dt>
                       <dd className="font-semibold tabular-nums text-slate-900">
                         {filteredEntries.length}
                       </dd>
@@ -950,10 +959,14 @@ export function LogTable({ rows }: Props) {
                     <span className="mr-2 inline-block size-2 border border-emerald-800 bg-emerald-600" />
                     Event volume (visible window)
                   </p>
-                  <LogVolumeAreaChart rows={chartRows} />
+                  <LogVolumeAreaChart rows={throughputChartRows} />
                 </div>
                 <div className="p-4">
-                  <LogSummaryCharts rows={chartRows} lightSurface />
+                  <p className="mb-2 text-[11px] text-slate-500">
+                    Charts blend a synthetic baseline (last ~60 minutes) with your filtered inbox so
+                    the curve always has shape.
+                  </p>
+                  <LogSummaryCharts rows={throughputChartRows} lightSurface />
                 </div>
               </section>
             ) : null}
