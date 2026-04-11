@@ -2,6 +2,8 @@
 
 import { useData } from "@/lib/data-context";
 import { HarborStats } from "@/components/harbor/HarborStats";
+import { DiagnosticFindings } from "@/components/harbor/DiagnosticFindings";
+import { PipelineHealth } from "@/components/harbor/PipelineHealth";
 import { BeaconAlertCard } from "@/components/harbor/BeaconAlertCard";
 import { InterventionTimeline } from "@/components/harbor/InterventionTimeline";
 import { SeverityDonut } from "@/components/harbor/SeverityDonut";
@@ -33,41 +35,72 @@ export default function HarborOverview() {
     );
   }
 
+  const criticalCount = metrics.findings.filter(
+    (f) => f.severity === "critical"
+  ).length;
+
   return (
     <PageTransition>
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-      <div className="space-y-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Harbor Overview</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Executive summary of Inhibitor audit activity &mdash; all requests
-            evaluated during the drift audit stress test.
-          </p>
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+        {/* Header */}
+        <div className="space-y-3">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Harbor Overview
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Inhibitor drift audit diagnostics &mdash;{" "}
+              {metrics.totalRequests} requests across{" "}
+              {metrics.totalEvents.toLocaleString()} pipeline events.
+              {criticalCount > 0 && (
+                <span className="text-coral font-medium">
+                  {" "}
+                  {criticalCount} critical finding
+                  {criticalCount > 1 ? "s" : ""} require attention.
+                </span>
+              )}
+            </p>
+          </div>
+          <FileUpload />
         </div>
-        <FileUpload />
-      </div>
 
-      <HarborStats metrics={metrics} interventions={interventions} />
+        {/* Priority 1: KPI Stats (diagnostic-weighted) */}
+        <HarborStats metrics={metrics} interventions={interventions} />
 
-      <InterventionTimeline metrics={metrics} />
+        {/* Priority 2: Diagnostic Findings (ranked by impact) */}
+        {metrics.findings.length > 0 && (
+          <DiagnosticFindings findings={metrics.findings} />
+        )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <SeverityDonut interventions={interventions} />
-        <HazardClassChart metrics={metrics} />
-      </div>
-
-      <div>
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <span className="h-3 w-3 rounded-full bg-beacon animate-beacon-pulse inline-block" />
-          Beacon Alerts
-        </h2>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          {interventions.map((event) => (
-            <BeaconAlertCard key={event.request_id} event={event} />
-          ))}
+        {/* Priority 3: Pipeline Health gauges + Timeline */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <PipelineHealth metrics={metrics} />
+          <div className="lg:col-span-2">
+            <InterventionTimeline metrics={metrics} />
+          </div>
         </div>
+
+        {/* Priority 4: Signal distribution */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <SeverityDonut interventions={interventions} />
+          <HazardClassChart metrics={metrics} />
+        </div>
+
+        {/* Priority 5: Beacon Alerts (intervention details) */}
+        {interventions.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-beacon animate-beacon-pulse inline-block" />
+              Beacon Alerts
+            </h2>
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+              {interventions.map((event) => (
+                <BeaconAlertCard key={event.request_id} event={event} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
-    </div>
     </PageTransition>
   );
 }

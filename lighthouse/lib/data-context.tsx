@@ -49,7 +49,7 @@ async function processData(csvText: string, jsonlText: string) {
   const rawRows = await parseInhibitorCsv(csvText);
   const interventions = parseInhibitorEvents(jsonlText);
   const lifecycles = groupLifecycles(rawRows);
-  const metrics = deriveMetrics(lifecycles, interventions);
+  const metrics = deriveMetrics(lifecycles, interventions, rawRows);
   return { rawRows, interventions, lifecycles, metrics };
 }
 
