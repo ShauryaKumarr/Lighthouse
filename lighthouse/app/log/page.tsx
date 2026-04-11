@@ -8,33 +8,19 @@ export default function LogPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center space-y-4">
-          <div className="h-12 w-12 mx-auto rounded-full bg-beacon/20 animate-beacon-pulse" />
-          <p className="text-muted-foreground text-sm">Loading log data...</p>
-        </div>
+      <div className="flex min-h-screen items-center justify-center bg-[#2e2e32] text-sm text-zinc-400">
+        Loading log data…
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <p className="text-destructive">Error: {error}</p>
+      <div className="flex min-h-screen items-center justify-center bg-[#2e2e32] text-sm text-red-400">
+        Error: {error}
       </div>
     );
   }
 
-  return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Lighthouse Log</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Full event log from the Inhibitor audit. Search, filter by event type,
-          and click any row to expand its metadata.
-        </p>
-      </div>
-      <LogTable rows={rawRows} />
-    </div>
-  );
+  return <LogTable rows={rawRows} />;
 }
