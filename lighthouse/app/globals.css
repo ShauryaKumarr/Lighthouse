@@ -159,30 +159,30 @@
   animation: beam-sweep 0.8s ease-out forwards;
 }
 
-@keyframes log-blink-critical {
+@keyframes log-priority-pulse {
   0%,
   100% {
     opacity: 1;
+    transform: scale(1);
   }
   50% {
-    opacity: 0.35;
+    opacity: 0.42;
+    transform: scale(0.88);
   }
 }
 
-@keyframes log-blink-high {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+.animate-log-pri-low {
+  animation: log-priority-pulse 2.6s ease-in-out infinite;
 }
 
-.animate-log-blink-critical {
-  animation: log-blink-critical 0.85s ease-in-out infinite;
+.animate-log-pri-normal {
+  animation: log-priority-pulse 1.85s ease-in-out infinite;
 }
 
-.animate-log-blink-high {
-  animation: log-blink-high 1.5s ease-in-out infinite;
+.animate-log-pri-high {
+  animation: log-priority-pulse 1.15s ease-in-out infinite;
+}
+
+.animate-log-pri-critical {
+  animation: log-priority-pulse 0.72s ease-in-out infinite;
 }

@@ -24,13 +24,14 @@ import type { RawLogRow } from "@/lib/types";
 import { EVENT_CATEGORY } from "@/lib/types";
 import { LogSummaryCharts } from "@/components/log/LogSummaryCharts";
 import { LogVolumeAreaChart } from "@/components/log/LogVolumeAreaChart";
-import { getLogPriority, priorityBlinkClass } from "@/lib/log-priority";
+import { getLogPriority, priorityVisual } from "@/lib/log-priority";
 
 interface Props {
   rows: RawLogRow[];
 }
 
 const LIVE_POOL_SIZE = 50;
+const SEED_ENTRY_COUNT = 18;
 const STREAM_INTERVAL_MS = 880;
 const ROW_HEIGHT = 48;
 const GRID =
@@ -63,6 +64,22 @@ const CHANNEL_LABELS: Record<string, string> = {
 
 function escapeRegExp(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function seedLiveEntries(pool: RawLogRow[], n: number): LiveEntry[] {
+  const out: LiveEntry[] = [];
+  for (let k = 0; k < n; k++) {
+    const template = pool[k % pool.length];
+    out.push({
+      streamId: `seed-${k}-${template.index}`,
+      liveSeq: k + 1,
+      row: {
+        ...template,
+        timestamp: new Date(Date.now() - k * 72_000).toISOString(),
+      },
+    });
+  }
+  return out;
 }
 
 function buildLivePool(source: RawLogRow[], size: number): RawLogRow[] {
@@ -106,13 +123,7 @@ function HighlightText({ text, query }: { text: string; query: string }) {
 
 function PriorityDot({ event }: { event: string }) {
   const p = getLogPriority(event);
-  const blink = priorityBlinkClass(p);
-  const colors: Record<string, string> = {
-    critical: "bg-red-600",
-    high: "bg-amber-500",
-    normal: "bg-slate-400",
-    low: "bg-slate-300",
-  };
+  const { dotBg, pulse } = priorityVisual(p);
   const title =
     p === "critical"
       ? "Critical"
@@ -128,7 +139,7 @@ function PriorityDot({ event }: { event: string }) {
       title={`${title} priority`}
     >
       <span
-        className={`size-2.5 rounded-full ${colors[p]} ${blink ?? ""} ring-2 ring-white`}
+        className={`size-2.5 rounded-full ${dotBg} ${pulse} ring-2 ring-white`}
         aria-hidden
       />
     </span>
@@ -151,8 +162,15 @@ export function LogTable({ rows }: Props) {
   const livePool = useMemo(() => buildLivePool(rows, LIVE_POOL_SIZE), [rows]);
 
   useEffect(() => {
-    liveSeqRef.current = 0;
-    setLiveBuffer([]);
+    if (livePool.length === 0) {
+      liveSeqRef.current = 0;
+      setLiveBuffer([]);
+      setSelected(null);
+      return;
+    }
+    const seeded = seedLiveEntries(livePool, SEED_ENTRY_COUNT);
+    liveSeqRef.current = seeded.length;
+    setLiveBuffer(seeded);
     setSelected(null);
   }, [livePool]);
 
@@ -372,10 +390,15 @@ export function LogTable({ rows }: Props) {
 
       <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-8 lg:px-12">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-          <aside className="space-y-4 lg:col-span-4">
-            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-slate-900">Pipeline channels</h2>
+          <aside className="lg:col-span-4">
+            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-4 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div>
+                  <h2 className="text-sm font-semibold text-slate-900">Pipeline overview</h2>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Signals and channel mix for the current live buffer.
+                  </p>
+                </div>
                 <button
                   type="button"
                   className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
@@ -384,128 +407,74 @@ export function LogTable({ rows }: Props) {
                   <Settings className="size-4" aria-hidden />
                 </button>
               </div>
-              <p className="mt-1 text-xs text-slate-500">
-                Event volume by stage in the current live buffer.
-              </p>
-              <button
-                type="button"
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-slate-300 py-2.5 text-sm font-medium text-slate-600 hover:border-slate-400 hover:bg-slate-50"
-              >
-                <Plus className="size-4" aria-hidden />
-                Add watch channel
-              </button>
-            </div>
 
-            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Signals
-              </h3>
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                <div className="rounded-md border border-red-100 bg-red-50/80 p-3">
-                  <p className="text-xs text-red-800/80">Critical</p>
-                  <p className="text-2xl font-semibold tabular-nums text-red-700">
-                    {signalStats.critical}
-                  </p>
-                </div>
-                <div className="rounded-md border border-amber-100 bg-amber-50/80 p-3">
-                  <p className="text-xs text-amber-900/70">Elevated</p>
-                  <p className="text-2xl font-semibold tabular-nums text-amber-800">
-                    {signalStats.elevated}
-                  </p>
+              <div className="border-b border-slate-100 py-4">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Signals
+                </h3>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <div className="rounded-md border border-red-100 bg-red-50/80 p-3">
+                    <p className="text-xs text-red-800/80">Critical</p>
+                    <p className="text-2xl font-semibold tabular-nums text-red-700">
+                      {signalStats.critical}
+                    </p>
+                  </div>
+                  <div className="rounded-md border border-amber-100 bg-amber-50/80 p-3">
+                    <p className="text-xs text-amber-900/70">Elevated</p>
+                    <p className="text-2xl font-semibold tabular-nums text-amber-800">
+                      {signalStats.elevated}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-3">
-              {sidebarChannels.length === 0 ? (
-                <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500 shadow-sm">
-                  Waiting for live events…
-                </div>
-              ) : (
-                sidebarChannels.map((ch) => (
-                  <div
-                    key={ch.id}
-                    className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
-                  >
-                    <h3 className="text-sm font-semibold text-slate-900">{ch.label}</h3>
-                    <dl className="mt-3 space-y-2 text-sm">
-                      <div className="flex justify-between gap-4">
-                        <dt className="text-slate-500">Events</dt>
-                        <dd className="font-medium tabular-nums text-slate-900">{ch.count}</dd>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <dt className="text-slate-500">Share of buffer</dt>
-                        <dd className="flex items-center gap-1 font-medium tabular-nums text-emerald-700">
-                          {liveBuffer.length
-                            ? `${Math.round((ch.count / liveBuffer.length) * 100)}%`
-                            : "—"}
-                          {liveBuffer.length > 0 && ch.count >= liveBuffer.length * 0.2 ? (
-                            <TrendingUp className="size-3.5 shrink-0" aria-hidden />
-                          ) : null}
-                        </dd>
-                      </div>
-                    </dl>
-                  </div>
-                ))
-              )}
+              <div className="border-b border-slate-100 py-4">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-slate-300 py-2.5 text-sm font-medium text-slate-600 hover:border-slate-400 hover:bg-slate-50"
+                >
+                  <Plus className="size-4" aria-hidden />
+                  Add watch channel
+                </button>
+              </div>
+
+              <div className="pt-4">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Channels
+                </h3>
+                {sidebarChannels.length === 0 ? (
+                  <p className="mt-3 text-sm text-slate-500">Waiting for live events…</p>
+                ) : (
+                  <ul className="mt-3 divide-y divide-slate-100">
+                    {sidebarChannels.map((ch) => (
+                      <li key={ch.id} className="py-3 first:pt-0">
+                        <h4 className="text-sm font-semibold text-slate-900">{ch.label}</h4>
+                        <dl className="mt-2 space-y-1.5 text-sm">
+                          <div className="flex justify-between gap-4">
+                            <dt className="text-slate-500">Events</dt>
+                            <dd className="font-medium tabular-nums text-slate-900">{ch.count}</dd>
+                          </div>
+                          <div className="flex justify-between gap-4">
+                            <dt className="text-slate-500">Share</dt>
+                            <dd className="flex items-center gap-1 font-medium tabular-nums text-emerald-700">
+                              {liveBuffer.length
+                                ? `${Math.round((ch.count / liveBuffer.length) * 100)}%`
+                                : "—"}
+                              {liveBuffer.length > 0 && ch.count >= liveBuffer.length * 0.2 ? (
+                                <TrendingUp className="size-3.5 shrink-0" aria-hidden />
+                              ) : null}
+                            </dd>
+                          </div>
+                        </dl>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
           </aside>
 
           <div className="space-y-6 lg:col-span-8">
-            {showCharts ? (
-              <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
-                <div className="border-b border-slate-100 px-5 py-4">
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                      <h2 className="text-lg font-semibold text-slate-900">Throughput</h2>
-                      <p className="text-sm text-slate-500">
-                        Estimated rate in the current buffer window.
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                        Ingestion
-                      </p>
-                      <p className="flex items-center justify-end gap-1.5 text-2xl font-semibold text-emerald-700">
-                        {throughputLabel}
-                        <TrendingUp className="size-5" aria-hidden />
-                      </p>
-                    </div>
-                  </div>
-                  <dl className="mt-4 grid grid-cols-2 gap-4 border-t border-slate-100 pt-4 text-sm sm:grid-cols-3">
-                    <div>
-                      <dt className="text-slate-500">In view</dt>
-                      <dd className="font-semibold tabular-nums text-slate-900">
-                        {filteredEntries.length}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-slate-500">Buffer fill</dt>
-                      <dd className="font-semibold tabular-nums text-slate-900">
-                        {liveBuffer.length}/{LIVE_POOL_SIZE}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-slate-500">Stream</dt>
-                      <dd className="font-semibold text-slate-900">
-                        {livePaused ? "Paused" : "Live"}
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
-                <div className="border-b border-slate-100 px-2 pb-2">
-                  <p className="px-3 pt-3 text-xs font-medium text-slate-500">
-                    <span className="mr-2 inline-block size-2 rounded-full bg-emerald-600" />
-                    Event volume (visible window)
-                  </p>
-                  <LogVolumeAreaChart rows={chartRows} />
-                </div>
-                <div className="p-4">
-                  <LogSummaryCharts rows={chartRows} lightSurface />
-                </div>
-              </section>
-            ) : null}
-
             {showStream ? (
               <section
                 ref={streamSectionRef}
@@ -515,8 +484,8 @@ export function LogTable({ rows }: Props) {
                   <div>
                     <h2 className="text-lg font-semibold text-slate-900">Activity</h2>
                     <p className="text-xs text-slate-500">
-                      Search, filter, and export the live window. Critical rows blink in the
-                      priority column.
+                      Search, filter, and export the live window. Priority uses green → yellow →
+                      orange → red; faster pulse means higher severity.
                     </p>
                   </div>
                   <button
@@ -653,12 +622,7 @@ export function LogTable({ rows }: Props) {
                           const row = entry.row;
                           const isSelected = selected?.streamId === entry.streamId;
                           const p = getLogPriority(row.event);
-                          const stripe =
-                            p === "critical"
-                              ? "border-l-[3px] border-l-red-600"
-                              : p === "high"
-                                ? "border-l-[3px] border-l-amber-500"
-                                : "border-l-[3px] border-l-transparent";
+                          const stripe = `border-l-[3px] ${priorityVisual(p).stripe}`;
                           return (
                             <button
                               key={entry.streamId}
@@ -762,11 +726,66 @@ export function LogTable({ rows }: Props) {
                       </div>
                     ) : (
                       <p className="text-sm leading-relaxed text-slate-600">
-                        Select a row to inspect metadata. The layout mirrors a portfolio-style
-                        dashboard: channels on the left, throughput and activity on the right.
+                        Select a row to inspect metadata. Inbox stays above; charts summarize the
+                        same filtered window below.
                       </p>
                     )}
                   </aside>
+                </div>
+              </section>
+            ) : null}
+
+            {showCharts ? (
+              <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
+                <div className="border-b border-slate-100 px-5 py-4">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                      <h2 className="text-lg font-semibold text-slate-900">Throughput</h2>
+                      <p className="text-sm text-slate-500">
+                        Estimated rate in the current buffer window. Charts use the same filters as
+                        the inbox above.
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                        Ingestion
+                      </p>
+                      <p className="flex items-center justify-end gap-1.5 text-2xl font-semibold text-emerald-700">
+                        {throughputLabel}
+                        <TrendingUp className="size-5" aria-hidden />
+                      </p>
+                    </div>
+                  </div>
+                  <dl className="mt-4 grid grid-cols-2 gap-4 border-t border-slate-100 pt-4 text-sm sm:grid-cols-3">
+                    <div>
+                      <dt className="text-slate-500">In view</dt>
+                      <dd className="font-semibold tabular-nums text-slate-900">
+                        {filteredEntries.length}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">Buffer fill</dt>
+                      <dd className="font-semibold tabular-nums text-slate-900">
+                        {liveBuffer.length}/{LIVE_POOL_SIZE}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-500">Stream</dt>
+                      <dd className="font-semibold text-slate-900">
+                        {livePaused ? "Paused" : "Live"}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+                <div className="border-b border-slate-100 px-2 pb-2">
+                  <p className="px-3 pt-3 text-xs font-medium text-slate-500">
+                    <span className="mr-2 inline-block size-2 rounded-full bg-emerald-600" />
+                    Event volume (visible window)
+                  </p>
+                  <LogVolumeAreaChart rows={chartRows} />
+                </div>
+                <div className="p-4">
+                  <LogSummaryCharts rows={chartRows} lightSurface />
                 </div>
               </section>
             ) : null}

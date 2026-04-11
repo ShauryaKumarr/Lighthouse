@@ -22,8 +22,36 @@ export function getLogPriority(event: string): LogPriority {
   return "normal";
 }
 
-export function priorityBlinkClass(p: LogPriority): string | undefined {
-  if (p === "critical") return "animate-log-blink-critical";
-  if (p === "high") return "animate-log-blink-high";
-  return undefined;
+/** Green → yellow → orange → red by severity; blink frequency increases with severity. */
+export function priorityVisual(p: LogPriority): {
+  dotBg: string;
+  stripe: string;
+  pulse: string;
+} {
+  switch (p) {
+    case "low":
+      return {
+        dotBg: "bg-emerald-500",
+        stripe: "border-l-emerald-500",
+        pulse: "animate-log-pri-low",
+      };
+    case "normal":
+      return {
+        dotBg: "bg-yellow-400",
+        stripe: "border-l-yellow-400",
+        pulse: "animate-log-pri-normal",
+      };
+    case "high":
+      return {
+        dotBg: "bg-orange-500",
+        stripe: "border-l-orange-500",
+        pulse: "animate-log-pri-high",
+      };
+    case "critical":
+      return {
+        dotBg: "bg-red-600",
+        stripe: "border-l-red-600",
+        pulse: "animate-log-pri-critical",
+      };
+  }
 }
