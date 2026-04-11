@@ -13,9 +13,10 @@ import {
 } from "recharts";
 import type { RawLogRow } from "@/lib/types";
 import { EVENT_CATEGORY, CATEGORY_COLORS } from "@/lib/types";
-
 interface Props {
   rows: RawLogRow[];
+  /** Use light surfaces (for the log console light theme). */
+  lightSurface?: boolean;
 }
 
 const AXIS = { fill: "#64748b", fontSize: 11 };
@@ -55,7 +56,21 @@ function colorForEventType(eventKey: string, index: number): string {
   return FALLBACK_EVENT_COLORS[index % FALLBACK_EVENT_COLORS.length];
 }
 
-export function LogSummaryCharts({ rows }: Props) {
+export function LogSummaryCharts({ rows, lightSurface }: Props) {
+  const card = lightSurface
+    ? "rounded-lg border border-slate-200 bg-white p-4 shadow-sm"
+    : "rounded-lg border border-border bg-card p-4";
+  const title = lightSurface
+    ? "text-xs font-medium uppercase tracking-wide text-slate-500"
+    : "text-xs font-medium uppercase tracking-wide text-muted-foreground";
+  const empty = lightSurface
+    ? "rounded-lg border border-slate-200 bg-white px-4 py-8 text-center text-sm text-slate-500 shadow-sm"
+    : "rounded-lg border border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground";
+  const tip = lightSurface
+    ? "rounded-md border border-slate-200 bg-white px-2.5 py-2 text-xs shadow-md"
+    : "rounded-md border border-border bg-card px-2.5 py-2 text-xs shadow-sm";
+  const tipMuted = lightSurface ? "mt-1 text-slate-600" : "mt-1 text-muted-foreground";
+  const tipTitle = lightSurface ? "font-mono text-[10px] text-slate-800" : "font-mono text-[10px] text-foreground";
   const { byMinute, topEvents } = useMemo(() => {
     const minuteMap = new Map<string, number>();
     const eventMap = new Map<string, number>();
@@ -90,7 +105,7 @@ export function LogSummaryCharts({ rows }: Props) {
 
   if (rows.length === 0) {
     return (
-      <div className="rounded-lg border border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground">
+      <div className={empty}>
         No rows match the current filters.
       </div>
     );
@@ -98,8 +113,8 @@ export function LogSummaryCharts({ rows }: Props) {
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <div className="rounded-lg border border-border bg-card p-4">
-        <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <div className={card}>
+        <h3 className={title}>
           Events by minute (visible window)
         </h3>
         <div className="mt-3 h-52">
@@ -121,7 +136,7 @@ export function LogSummaryCharts({ rows }: Props) {
                 width={36}
               />
               <Tooltip
-                cursor={{ fill: "oklch(0.95 0.01 250 / 0.6)" }}
+                cursor={{ fill: lightSurface ? "rgb(241 245 249 / 0.8)" : "oklch(0.95 0.01 250 / 0.6)" }}
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
                   const row = payload[0].payload as {
@@ -130,9 +145,9 @@ export function LogSummaryCharts({ rows }: Props) {
                   };
                   const v = Number(payload[0].value);
                   return (
-                    <div className="rounded-md border border-border bg-card px-2.5 py-2 text-xs shadow-sm">
-                      <p className="font-mono text-[10px] text-foreground">{row.slot}</p>
-                      <p className="mt-1 text-muted-foreground">
+                    <div className={tip}>
+                      <p className={tipTitle}>{row.slot}</p>
+                      <p className={tipMuted}>
                         {Number.isFinite(v) ? v.toLocaleString() : "—"} events
                       </p>
                     </div>
@@ -149,8 +164,8 @@ export function LogSummaryCharts({ rows }: Props) {
         </div>
       </div>
 
-      <div className="rounded-lg border border-border bg-card p-4">
-        <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <div className={card}>
+        <h3 className={title}>
           Top event types
         </h3>
         <div className="mt-3 h-52">
@@ -172,16 +187,16 @@ export function LogSummaryCharts({ rows }: Props) {
                 interval={0}
               />
               <Tooltip
-                cursor={{ fill: "oklch(0.95 0.01 250 / 0.6)" }}
+                cursor={{ fill: lightSurface ? "rgb(241 245 249 / 0.8)" : "oklch(0.95 0.01 250 / 0.6)" }}
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null;
                   const p = payload[0].payload as { fullEvent: string; count: number };
                   return (
-                    <div className="rounded-md border border-border bg-card px-2.5 py-2 text-xs shadow-sm">
-                      <p className="max-w-xs break-all font-mono text-[10px] leading-snug text-foreground">
+                    <div className={tip}>
+                      <p className="max-w-xs break-all font-mono text-[10px] leading-snug text-slate-900">
                         {p.fullEvent}
                       </p>
-                      <p className="mt-1 text-muted-foreground">
+                      <p className={tipMuted}>
                         {p.count.toLocaleString()} events
                       </p>
                     </div>
