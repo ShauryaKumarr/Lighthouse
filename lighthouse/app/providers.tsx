@@ -10,7 +10,7 @@ export function ClientProviders({ children }: { children: ReactNode }) {
     <TooltipProvider>
       <DataProvider>
         <NavBar />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 bg-background">{children}</main>
       </DataProvider>
     </TooltipProvider>
   );

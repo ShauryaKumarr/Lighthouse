@@ -114,17 +114,17 @@ export function HazardHeatmap({ lifecycles }: Props) {
                           style={{
                             backgroundColor:
                               val === 0
-                                ? "rgba(30,58,95,0.15)"
-                                : `rgba(245,158,11,${0.15 + intensity * 0.75})`,
+                                ? "rgb(241 245 249)"
+                                : `rgba(245,158,11,${0.2 + intensity * 0.65})`,
                             color:
-                              intensity > 0.5
-                                ? "#0f172a"
-                                : "rgba(248,250,252,0.7)",
+                              intensity > 0.35
+                                ? "rgb(27, 49, 57)"
+                                : "rgb(71, 85, 105)",
                           }}
                         >
                           {val > 0 ? val : ""}
                         </TooltipTrigger>
-                        <TooltipContent className="bg-navy text-fog border-ocean text-xs">
+                        <TooltipContent className="border border-border bg-card text-card-foreground text-xs shadow-lg">
                           <p>
                             <span className="text-coral">
                               {OBSERVATION_LABELS[o] ?? o}
@@ -134,7 +134,7 @@ export function HazardHeatmap({ lifecycles }: Props) {
                               {PREDICTION_LABELS[p] ?? p}
                             </span>
                           </p>
-                          <p className="text-fog/60">
+                          <p className="text-muted-foreground">
                             {val} co-occurrence{val !== 1 ? "s" : ""}
                           </p>
                         </TooltipContent>

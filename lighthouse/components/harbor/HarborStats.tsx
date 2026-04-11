@@ -71,7 +71,7 @@ export function HarborStats({ metrics, interventions }: Props) {
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {stats.map((stat) => {
         const borderClass =
           stat.highlight === "critical"
@@ -99,10 +99,8 @@ export function HarborStats({ metrics, interventions }: Props) {
                 className={`absolute inset-x-0 top-0 h-1 ${topBarClass} animate-beacon-pulse`}
               />
             )}
-            <CardContent className="p-4">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                {stat.label}
-              </p>
+            <CardContent className="p-5">
+              <p className="pro-kicker text-muted-foreground">{stat.label}</p>
               <p
                 className={`text-2xl font-bold tracking-tight mt-1 ${
                   stat.highlight === "critical"

@@ -9,8 +9,20 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import type { DerivedMetrics } from "@/lib/types";
+import {
+  CHART_AXIS,
+  CHART_GRID,
+  CHART_TICK,
+  lightChartTooltip,
+} from "@/lib/chart-theme";
 
 interface Props {
   metrics: DerivedMetrics;
@@ -24,10 +36,14 @@ export function InterventionTimeline({ metrics }: Props) {
 
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">
-          Request Volume Over Audit Window
+      <CardHeader className="space-y-1.5 pb-3">
+        <p className="pro-kicker text-brand">Load profile</p>
+        <CardTitle className="text-lg font-semibold tracking-tight">
+          Request volume
         </CardTitle>
+        <CardDescription className="text-sm">
+          Requests observed across the simulated audit window (hourly buckets).
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="h-64">
@@ -39,26 +55,18 @@ export function InterventionTimeline({ metrics }: Props) {
                   <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e3a5f" opacity={0.3} />
+              <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} opacity={0.85} />
               <XAxis
                 dataKey="label"
-                tick={{ fill: "#94a3b8", fontSize: 11 }}
-                axisLine={{ stroke: "#1e3a5f" }}
+                tick={{ fill: CHART_TICK, fontSize: 11 }}
+                axisLine={{ stroke: CHART_AXIS }}
               />
               <YAxis
-                tick={{ fill: "#94a3b8", fontSize: 11 }}
-                axisLine={{ stroke: "#1e3a5f" }}
+                tick={{ fill: CHART_TICK, fontSize: 11 }}
+                axisLine={{ stroke: CHART_AXIS }}
                 allowDecimals={false}
               />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#0f172a",
-                  border: "1px solid #1e3a5f",
-                  borderRadius: "8px",
-                  color: "#f8fafc",
-                  fontSize: 12,
-                }}
-              />
+              <Tooltip contentStyle={{ ...lightChartTooltip }} />
               <Area
                 type="monotone"
                 dataKey="count"
