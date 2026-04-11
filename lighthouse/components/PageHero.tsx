@@ -29,7 +29,7 @@ export function PageHero({
   return (
     <div
       className={cn(
-        "border-b border-border/50 bg-gradient-to-br from-[oklch(0.13_0.035_252)] via-background to-background",
+        "border-b border-slate-200/90 bg-gradient-to-b from-white via-[#fafbfc] to-[#f4f6f8]",
         className
       )}
     >

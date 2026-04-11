@@ -11,6 +11,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { InterventionEvent } from "@/lib/types";
 import { SEVERITY_COLORS } from "@/lib/types";
+import { CHART_LEGEND, lightChartTooltip } from "@/lib/chart-theme";
 
 interface Props {
   interventions: InterventionEvent[];
@@ -50,18 +51,10 @@ export function SeverityDonut({ interventions }: Props) {
                   <Cell key={idx} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#0f172a",
-                  border: "1px solid #1e3a5f",
-                  borderRadius: "8px",
-                  color: "#f8fafc",
-                  fontSize: 12,
-                }}
-              />
+              <Tooltip contentStyle={{ ...lightChartTooltip }} />
               <Legend
                 formatter={(value) => (
-                  <span style={{ color: "#94a3b8", fontSize: 12 }}>
+                  <span style={{ color: CHART_LEGEND, fontSize: 12 }}>
                     {value}
                   </span>
                 )}

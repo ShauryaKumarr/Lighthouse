@@ -407,40 +407,40 @@ export function LogTable({ rows }: Props) {
     "inline-flex h-8 items-center gap-1 border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800 shadow-sm hover:bg-slate-50";
 
   return (
-    <div className="min-h-screen bg-log-shell text-slate-900 antialiased">
-      <header className="bg-gradient-to-br from-[#060d14] via-[#0c1826] to-[#122438] px-4 py-10 text-white sm:px-8 lg:px-12">
+    <div className="min-h-screen bg-background text-foreground antialiased">
+      <header className="border-b border-slate-200/90 bg-gradient-to-b from-white via-[#fafbfc] to-[#f4f6f8] px-4 py-10 sm:px-8 lg:px-12">
         <div className="mx-auto flex max-w-[1400px] flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="pro-kicker text-brand">Inhibitor audit console</p>
-            <h1 className="mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">
+            <h1 className="mt-2 text-4xl font-semibold tracking-tight text-[rgb(27,49,57)] sm:text-5xl">
               Log operations
             </h1>
-            <p className="mt-3 max-w-xl text-base leading-relaxed text-white/75">
+            <p className="mt-3 max-w-xl text-base leading-relaxed text-muted-foreground">
               High-rate tail: dense sub-second bursts, short pauses, and auto-scroll so the inbox
               stays in motion. Buffer holds up to {LIVE_POOL_SIZE} events.
             </p>
           </div>
           <div className="flex flex-wrap items-end gap-8 lg:justify-end">
             <div>
-              <p className="pro-kicker text-white/55">Archive depth</p>
-              <p className="text-4xl font-semibold tabular-nums tracking-tight sm:text-5xl">
+              <p className="pro-kicker text-slate-500">Archive depth</p>
+              <p className="text-4xl font-semibold tabular-nums tracking-tight text-[rgb(27,49,57)] sm:text-5xl">
                 {rows.length.toLocaleString()}
               </p>
-              <p className="text-sm text-white/75">events on file</p>
+              <p className="text-sm text-muted-foreground">events on file</p>
             </div>
-            <div className="border-l border-white/20 pl-8">
-              <p className="pro-kicker text-white/55">Rolling buffer</p>
-              <p className="text-4xl font-semibold tabular-nums tracking-tight sm:text-5xl">
+            <div className="border-l border-slate-200 pl-8">
+              <p className="pro-kicker text-slate-500">Rolling buffer</p>
+              <p className="text-4xl font-semibold tabular-nums tracking-tight text-[rgb(27,49,57)] sm:text-5xl">
                 {liveBuffer.length}
-                <span className="text-xl font-normal text-white/60">
+                <span className="text-xl font-normal text-slate-500">
                   /{LIVE_POOL_SIZE}
                 </span>
               </p>
-              <p className="text-sm text-white/75">live window</p>
+              <p className="text-sm text-muted-foreground">live window</p>
             </div>
             <Link
               href="/"
-              className="border border-white/25 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/15"
+              className="rounded-md border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-[rgb(27,49,57)] shadow-sm transition hover:border-slate-400 hover:bg-slate-50"
             >
               ← Harbor overview
             </Link>
@@ -448,7 +448,7 @@ export function LogTable({ rows }: Props) {
         </div>
       </header>
 
-      <nav className="border-b border-zinc-700/80 bg-[#1e1e22]">
+      <nav className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-stretch gap-1 px-4 sm:px-8 lg:px-12">
           {TABS.map((tab) => (
             <button
@@ -457,8 +457,8 @@ export function LogTable({ rows }: Props) {
               onClick={() => setActiveTab(tab.id)}
               className={`relative px-4 py-3.5 text-[15px] font-semibold transition-colors ${
                 activeTab === tab.id
-                  ? "text-zinc-50 after:absolute after:bottom-0 after:left-4 after:right-4 after:h-0.5 after:rounded-full after:bg-brand"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  ? "text-[rgb(27,49,57)] after:absolute after:bottom-0 after:left-4 after:right-4 after:h-0.5 after:rounded-full after:bg-brand"
+                  : "text-slate-500 hover:text-[rgb(27,49,57)]"
               }`}
             >
               {tab.label}
@@ -722,14 +722,14 @@ export function LogTable({ rows }: Props) {
                           <SelectTrigger
                             id="log-event-filter"
                             aria-labelledby="log-event-filter-label"
-                            className="h-8 min-w-0 w-full max-w-md border-slate-300 bg-white text-left text-xs font-medium text-slate-900 shadow-sm hover:border-slate-400 hover:bg-slate-50 focus-visible:border-[#b91c1c] focus-visible:ring-1 focus-visible:ring-[#b91c1c]/30 data-[size=default]:h-8 sm:min-w-[220px] dark:bg-white dark:hover:bg-slate-50"
+                            className="h-8 min-w-0 w-full max-w-md border-slate-300 bg-white text-left text-xs font-medium text-slate-900 shadow-sm hover:border-slate-400 hover:bg-slate-50 focus-visible:border-[#b91c1c] focus-visible:ring-1 focus-visible:ring-[#b91c1c]/30 data-[size=default]:h-8 sm:min-w-[220px]"
                           >
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent
                             align="start"
                             sideOffset={8}
-                            className="max-h-72 min-w-[var(--anchor-width)] border border-slate-300 bg-white p-0.5 text-slate-900 shadow-lg dark:bg-white dark:text-slate-900"
+                            className="max-h-72 min-w-[var(--anchor-width)] border border-slate-300 bg-white p-0.5 text-slate-900 shadow-lg"
                           >
                             <SelectItem
                               value="__all__"
@@ -962,7 +962,7 @@ export function LogTable({ rows }: Props) {
                     Charts blend a synthetic baseline (last ~60 minutes) with your filtered inbox so
                     the curve always has shape.
                   </p>
-                  <LogSummaryCharts rows={throughputChartRows} lightSurface />
+                  <LogSummaryCharts rows={throughputChartRows} />
                 </div>
               </section>
             ) : null}

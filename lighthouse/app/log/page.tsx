@@ -8,7 +8,7 @@ export default function LogPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-log-shell text-sm text-zinc-400">
+      <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
         Loading log data…
       </div>
     );
@@ -16,7 +16,7 @@ export default function LogPage() {
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-log-shell text-sm text-red-400">
+      <div className="flex min-h-screen items-center justify-center bg-background text-sm text-destructive">
         Error: {error}
       </div>
     );

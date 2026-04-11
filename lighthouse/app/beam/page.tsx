@@ -93,7 +93,7 @@ export default function BeamListPage() {
           {summaryStats.map((stat) => (
             <div
               key={stat.label}
-              className="rounded-lg border border-border/60 bg-card/80 px-5 py-4 shadow-sm shadow-black/15 dark:shadow-black/30"
+              className="rounded-lg border border-border/80 bg-card px-5 py-4 shadow-sm shadow-slate-900/5"
             >
               <div className="mb-2 flex items-center gap-2">
                 <stat.icon className={`h-4 w-4 ${stat.color} opacity-70`} />
@@ -110,7 +110,7 @@ export default function BeamListPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.2 }}
-          className="overflow-hidden rounded-lg border border-border/60 bg-card/80 shadow-sm shadow-black/15 dark:shadow-black/30"
+          className="overflow-hidden rounded-lg border border-border/80 bg-card shadow-sm shadow-slate-900/5"
         >
           <div className="border-b border-border/40 px-5 py-3">
             <span className="pro-kicker text-brand">Request traces</span>

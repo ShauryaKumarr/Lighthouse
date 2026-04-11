@@ -11,6 +11,12 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { DerivedMetrics } from "@/lib/types";
+import {
+  CHART_AXIS,
+  CHART_GRID,
+  CHART_TICK,
+  lightChartTooltip,
+} from "@/lib/chart-theme";
 import { OBSERVATION_LABELS, PREDICTION_LABELS } from "@/lib/types";
 
 interface Props {
@@ -46,29 +52,21 @@ export function HazardClassChart({ metrics }: Props) {
         <div className="h-56">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={combined.slice(0, 8)} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e3a5f" opacity={0.3} />
+              <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} opacity={0.85} />
               <XAxis
                 type="number"
-                tick={{ fill: "#94a3b8", fontSize: 11 }}
-                axisLine={{ stroke: "#1e3a5f" }}
+                tick={{ fill: CHART_TICK, fontSize: 11 }}
+                axisLine={{ stroke: CHART_AXIS }}
                 allowDecimals={false}
               />
               <YAxis
                 type="category"
                 dataKey="name"
                 width={180}
-                tick={{ fill: "#94a3b8", fontSize: 10 }}
-                axisLine={{ stroke: "#1e3a5f" }}
+                tick={{ fill: CHART_TICK, fontSize: 10 }}
+                axisLine={{ stroke: CHART_AXIS }}
               />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#0f172a",
-                  border: "1px solid #1e3a5f",
-                  borderRadius: "8px",
-                  color: "#f8fafc",
-                  fontSize: 12,
-                }}
-              />
+              <Tooltip contentStyle={{ ...lightChartTooltip }} />
               <Bar
                 dataKey="count"
                 fill="#f59e0b"

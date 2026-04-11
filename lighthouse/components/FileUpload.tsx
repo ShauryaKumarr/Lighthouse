@@ -20,7 +20,7 @@ export function FileUpload() {
 
   if (!isOpen) {
     return (
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-border/60 bg-card/60 px-4 py-3 shadow-sm shadow-black/10 dark:bg-card/40 dark:shadow-black/25">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-border bg-white px-4 py-3 shadow-sm shadow-slate-900/5">
         <span className="text-xs text-muted-foreground">
           Source{" "}
           <span className="font-mono text-[13px] text-foreground/90">{dataSource}</span>
@@ -77,7 +77,7 @@ export function FileUpload() {
         <button
           onClick={handleUpload}
           disabled={!csvFile}
-          className="h-8 rounded-md bg-beacon px-4 text-xs font-medium text-navy disabled:opacity-40 hover:bg-beacon-light transition-colors"
+          className="h-8 rounded-md bg-primary px-4 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
         >
           Load Data
         </button>
