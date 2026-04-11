@@ -25,6 +25,13 @@ import { EVENT_CATEGORY } from "@/lib/types";
 import { LogSummaryCharts } from "@/components/log/LogSummaryCharts";
 import { LogVolumeAreaChart } from "@/components/log/LogVolumeAreaChart";
 import { getLogPriority, priorityVisual } from "@/lib/log-priority";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Props {
   rows: RawLogRow[];
@@ -32,10 +39,9 @@ interface Props {
 
 const LIVE_POOL_SIZE = 50;
 const SEED_ENTRY_COUNT = 18;
-const STREAM_INTERVAL_MS = 880;
-const ROW_HEIGHT = 48;
+const ROW_HEIGHT = 52;
 const GRID =
-  "grid grid-cols-[40px_52px_minmax(128px,1fr)_minmax(0,1.4fr)_minmax(96px,120px)] gap-x-2 gap-y-0";
+  "grid grid-cols-[44px_56px_minmax(140px,1fr)_minmax(0,1.5fr)_minmax(104px,128px)] gap-x-3 gap-y-0";
 
 type LiveEntry = {
   streamId: string;
@@ -135,11 +141,11 @@ function PriorityDot({ event }: { event: string }) {
 
   return (
     <span
-      className="flex size-6 items-center justify-center"
+      className="flex size-8 items-center justify-center"
       title={`${title} priority`}
     >
       <span
-        className={`size-2.5 rounded-full ${dotBg} ${pulse} ring-2 ring-white`}
+        className={`size-3 rounded-full ${dotBg} ${pulse} ring-2 ring-white`}
         aria-hidden
       />
     </span>
@@ -160,6 +166,10 @@ export function LogTable({ rows }: Props) {
   const streamSectionRef = useRef<HTMLElement>(null);
 
   const livePool = useMemo(() => buildLivePool(rows, LIVE_POOL_SIZE), [rows]);
+  const livePoolRef = useRef(livePool);
+  const livePausedRef = useRef(livePaused);
+  livePoolRef.current = livePool;
+  livePausedRef.current = livePaused;
 
   useEffect(() => {
     if (livePool.length === 0) {
@@ -177,10 +187,27 @@ export function LogTable({ rows }: Props) {
   useEffect(() => {
     if (livePaused || livePool.length === 0) return;
 
-    const tick = () => {
-      const i = liveSeqRef.current % livePool.length;
+    const timeouts = new Set<ReturnType<typeof setTimeout>>();
+    const arm = (fn: () => void, ms: number) => {
+      const id = setTimeout(() => {
+        timeouts.delete(id);
+        fn();
+      }, ms);
+      timeouts.add(id);
+    };
+
+    const randomBetween = (a: number, b: number) =>
+      Math.round(a + Math.random() * (b - a));
+
+    let cancelled = false;
+
+    const emitOne = () => {
+      if (cancelled || livePausedRef.current) return;
+      const pool = livePoolRef.current;
+      if (pool.length === 0) return;
+      const i = liveSeqRef.current % pool.length;
       liveSeqRef.current += 1;
-      const template = livePool[i];
+      const template = pool[i];
       const streamId =
         typeof crypto !== "undefined" && crypto.randomUUID
           ? crypto.randomUUID()
@@ -197,9 +224,41 @@ export function LogTable({ rows }: Props) {
       setLiveBuffer((prev) => [entry, ...prev].slice(0, LIVE_POOL_SIZE));
     };
 
-    tick();
-    const id = window.setInterval(tick, STREAM_INTERVAL_MS);
-    return () => window.clearInterval(id);
+    const scheduleWave = () => {
+      if (cancelled || livePausedRef.current) return;
+      const roll = Math.random();
+      const wait =
+        roll < 0.11
+          ? randomBetween(220, 780)
+          : roll < 0.38
+            ? randomBetween(1200, 3200)
+            : randomBetween(2000, 5600);
+      arm(() => {
+        if (cancelled || livePausedRef.current) return;
+        const r = Math.random();
+        const burst = r < 0.48 ? 1 : r < 0.8 ? 2 : r < 0.93 ? 3 : 4;
+        let n = 0;
+        const runBurst = () => {
+          if (cancelled || livePausedRef.current) return;
+          emitOne();
+          n += 1;
+          if (n < burst) {
+            arm(runBurst, randomBetween(65, 420));
+          } else {
+            scheduleWave();
+          }
+        };
+        runBurst();
+      }, wait);
+    };
+
+    scheduleWave();
+
+    return () => {
+      cancelled = true;
+      timeouts.forEach(clearTimeout);
+      timeouts.clear();
+    };
   }, [livePool, livePaused]);
 
   useEffect(() => {
@@ -321,47 +380,47 @@ export function LogTable({ rows }: Props) {
   const searchPending = searchInput !== deferredQuery;
 
   const lightBtn =
-    "inline-flex h-9 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm hover:bg-slate-50";
+    "inline-flex h-11 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 text-[15px] font-semibold text-slate-800 shadow-sm hover:bg-slate-50";
 
   return (
     <div className="min-h-screen bg-[#e8eaed] text-slate-900 antialiased">
       <header className="bg-gradient-to-r from-[#4a0d18] via-[#6b1024] to-[#8b1538] px-4 py-8 text-white sm:px-8 lg:px-12">
         <div className="mx-auto flex max-w-[1400px] flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-sm font-medium text-white/80">Inhibitor audit console</p>
-            <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">
+            <p className="text-[15px] font-semibold text-white/85">Inhibitor audit console</p>
+            <h1 className="mt-1 text-4xl font-semibold tracking-tight sm:text-5xl">
               Log operations
             </h1>
-            <p className="mt-2 max-w-xl text-sm text-white/75">
-              Live tail cycles {livePool.length} sampled templates; buffer holds up to{" "}
-              {LIVE_POOL_SIZE} events. Use tabs to focus the stream or analytics.
+            <p className="mt-2 max-w-xl text-base leading-relaxed text-white/80">
+              Live tail cycles {livePool.length} sampled templates with randomized gaps and bursts
+              (not a fixed clock). Buffer holds up to {LIVE_POOL_SIZE} events.
             </p>
           </div>
           <div className="flex flex-wrap items-end gap-8 lg:justify-end">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-white/60">
+              <p className="text-sm font-medium uppercase tracking-wide text-white/65">
                 Archive depth
               </p>
-              <p className="text-3xl font-semibold tabular-nums tracking-tight sm:text-4xl">
+              <p className="text-4xl font-semibold tabular-nums tracking-tight sm:text-5xl">
                 {rows.length.toLocaleString()}
               </p>
-              <p className="text-xs text-white/70">events on file</p>
+              <p className="text-sm text-white/75">events on file</p>
             </div>
             <div className="border-l border-white/25 pl-8">
-              <p className="text-xs font-medium uppercase tracking-wide text-white/60">
+              <p className="text-sm font-medium uppercase tracking-wide text-white/65">
                 Rolling buffer
               </p>
-              <p className="text-3xl font-semibold tabular-nums tracking-tight sm:text-4xl">
+              <p className="text-4xl font-semibold tabular-nums tracking-tight sm:text-5xl">
                 {liveBuffer.length}
                 <span className="text-xl font-normal text-white/60">
                   /{LIVE_POOL_SIZE}
                 </span>
               </p>
-              <p className="text-xs text-white/70">live window</p>
+              <p className="text-sm text-white/75">live window</p>
             </div>
             <Link
               href="/"
-              className="rounded-md border border-white/30 bg-white/10 px-3 py-2 text-sm font-medium text-white hover:bg-white/20"
+              className="rounded-lg border border-white/30 bg-white/10 px-4 py-2.5 text-[15px] font-semibold text-white hover:bg-white/20"
             >
               ← Harbor overview
             </Link>
@@ -376,7 +435,7 @@ export function LogTable({ rows }: Props) {
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`relative px-4 py-3.5 text-sm font-medium transition-colors ${
+              className={`relative px-4 py-3.5 text-[15px] font-semibold transition-colors ${
                 activeTab === tab.id
                   ? "text-slate-900 after:absolute after:bottom-0 after:left-4 after:right-4 after:h-0.5 after:rounded-full after:bg-[#b91c1c]"
                   : "text-slate-500 hover:text-slate-800"
@@ -394,8 +453,8 @@ export function LogTable({ rows }: Props) {
             <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-4 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
               <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                 <div>
-                  <h2 className="text-sm font-semibold text-slate-900">Pipeline overview</h2>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <h2 className="text-base font-semibold text-slate-900">Pipeline overview</h2>
+                  <p className="mt-1 text-sm leading-relaxed text-slate-600">
                     Signals and channel mix for the current live buffer.
                   </p>
                 </div>
@@ -409,19 +468,19 @@ export function LogTable({ rows }: Props) {
               </div>
 
               <div className="border-b border-slate-100 py-4">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <h3 className="text-[13px] font-semibold uppercase tracking-wide text-slate-600">
                   Signals
                 </h3>
                 <div className="mt-3 grid grid-cols-2 gap-3">
                   <div className="rounded-md border border-red-100 bg-red-50/80 p-3">
-                    <p className="text-xs text-red-800/80">Critical</p>
-                    <p className="text-2xl font-semibold tabular-nums text-red-700">
+                  <p className="text-sm font-medium text-red-800/90">Critical</p>
+                  <p className="text-3xl font-semibold tabular-nums text-red-700">
                       {signalStats.critical}
                     </p>
                   </div>
                   <div className="rounded-md border border-amber-100 bg-amber-50/80 p-3">
-                    <p className="text-xs text-amber-900/70">Elevated</p>
-                    <p className="text-2xl font-semibold tabular-nums text-amber-800">
+                    <p className="text-sm font-medium text-amber-900/80">Elevated</p>
+                    <p className="text-3xl font-semibold tabular-nums text-amber-800">
                       {signalStats.elevated}
                     </p>
                   </div>
@@ -431,7 +490,7 @@ export function LogTable({ rows }: Props) {
               <div className="border-b border-slate-100 py-4">
                 <button
                   type="button"
-                  className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-slate-300 py-2.5 text-sm font-medium text-slate-600 hover:border-slate-400 hover:bg-slate-50"
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 py-3 text-[15px] font-semibold text-slate-600 hover:border-slate-400 hover:bg-slate-50"
                 >
                   <Plus className="size-4" aria-hidden />
                   Add watch channel
@@ -439,23 +498,23 @@ export function LogTable({ rows }: Props) {
               </div>
 
               <div className="pt-4">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <h3 className="text-[13px] font-semibold uppercase tracking-wide text-slate-600">
                   Channels
                 </h3>
                 {sidebarChannels.length === 0 ? (
-                  <p className="mt-3 text-sm text-slate-500">Waiting for live events…</p>
+                  <p className="mt-3 text-[15px] text-slate-600">Waiting for live events…</p>
                 ) : (
                   <ul className="mt-3 divide-y divide-slate-100">
                     {sidebarChannels.map((ch) => (
                       <li key={ch.id} className="py-3 first:pt-0">
-                        <h4 className="text-sm font-semibold text-slate-900">{ch.label}</h4>
-                        <dl className="mt-2 space-y-1.5 text-sm">
+                        <h4 className="text-[15px] font-semibold text-slate-900">{ch.label}</h4>
+                        <dl className="mt-2 space-y-1.5 text-[15px]">
                           <div className="flex justify-between gap-4">
-                            <dt className="text-slate-500">Events</dt>
+                            <dt className="text-slate-600">Events</dt>
                             <dd className="font-medium tabular-nums text-slate-900">{ch.count}</dd>
                           </div>
                           <div className="flex justify-between gap-4">
-                            <dt className="text-slate-500">Share</dt>
+                            <dt className="text-slate-600">Share</dt>
                             <dd className="flex items-center gap-1 font-medium tabular-nums text-emerald-700">
                               {liveBuffer.length
                                 ? `${Math.round((ch.count / liveBuffer.length) * 100)}%`
@@ -482,10 +541,12 @@ export function LogTable({ rows }: Props) {
               >
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
                   <div>
-                    <h2 className="text-lg font-semibold text-slate-900">Activity</h2>
-                    <p className="text-xs text-slate-500">
-                      Search, filter, and export the live window. Priority uses green → yellow →
-                      orange → red; faster pulse means higher severity.
+                    <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
+                      Activity
+                    </h2>
+                    <p className="text-sm leading-relaxed text-slate-600">
+                      Search, filter, and export. New lines arrive in random bursts and pauses.
+                      Priority: green → yellow → orange → red; faster pulse = higher severity.
                     </p>
                   </div>
                   <button
@@ -512,7 +573,7 @@ export function LogTable({ rows }: Props) {
                     <div className="min-w-0 flex-1 space-y-1.5">
                       <label
                         htmlFor="log-search"
-                        className="text-xs font-medium text-slate-600"
+                        className="text-sm font-semibold text-slate-700"
                       >
                         Search log
                       </label>
@@ -530,7 +591,7 @@ export function LogTable({ rows }: Props) {
                           placeholder="Timestamp, event, API key, or metadata…"
                           value={searchInput}
                           onChange={(e) => setSearchInput(e.target.value)}
-                          className="h-10 w-full rounded-md border border-slate-300 bg-white pl-10 pr-24 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#b91c1c] focus:ring-2 focus:ring-[#b91c1c]/25"
+                          className="h-11 w-full rounded-lg border border-slate-300 bg-white pl-10 pr-24 text-[15px] text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#b91c1c] focus:ring-2 focus:ring-[#b91c1c]/25"
                         />
                         <div className="pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-2 text-xs text-slate-400">
                           {searchPending ? (
@@ -557,26 +618,48 @@ export function LogTable({ rows }: Props) {
                     </div>
 
                     <div className="flex flex-wrap items-end gap-2">
-                      <div className="space-y-1.5">
-                        <label
-                          htmlFor="log-event-filter"
-                          className="text-xs font-medium text-slate-600"
+                      <div className="space-y-2">
+                        <span
+                          id="log-event-filter-label"
+                          className="block text-sm font-semibold text-slate-700"
                         >
                           Event type
-                        </label>
-                        <select
-                          id="log-event-filter"
-                          value={eventFilter}
-                          onChange={(e) => setEventFilter(e.target.value)}
-                          className="h-10 min-w-[200px] rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none focus:border-[#b91c1c] focus:ring-2 focus:ring-[#b91c1c]/25"
+                        </span>
+                        <Select
+                          value={eventFilter === "" ? "__all__" : eventFilter}
+                          onValueChange={(v) =>
+                            setEventFilter(v == null || String(v) === "__all__" ? "" : String(v))
+                          }
                         >
-                          <option value="">All events</option>
-                          {eventTypes.map((t) => (
-                            <option key={t} value={t}>
-                              {t}
-                            </option>
-                          ))}
-                        </select>
+                          <SelectTrigger
+                            id="log-event-filter"
+                            aria-labelledby="log-event-filter-label"
+                            className="h-11 min-w-0 w-full max-w-md border-slate-200 bg-white text-left text-[15px] font-medium text-slate-900 shadow-sm hover:border-slate-300 hover:bg-slate-50/90 focus-visible:border-[#b91c1c] focus-visible:ring-2 focus-visible:ring-[#b91c1c]/25 data-[size=default]:h-11 sm:min-w-[280px] dark:bg-white dark:hover:bg-slate-50"
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent
+                            align="start"
+                            sideOffset={8}
+                            className="max-h-72 min-w-[var(--anchor-width)] rounded-xl border border-slate-200 bg-white p-1.5 text-slate-900 shadow-xl ring-1 ring-slate-900/10 dark:bg-white dark:text-slate-900"
+                          >
+                            <SelectItem
+                              value="__all__"
+                              className="cursor-pointer rounded-lg py-2.5 pl-3 pr-8 text-[15px] font-semibold text-slate-800 focus:bg-slate-100"
+                            >
+                              All events
+                            </SelectItem>
+                            {eventTypes.map((t) => (
+                              <SelectItem
+                                key={t}
+                                value={t}
+                                className="cursor-pointer rounded-lg py-2.5 pl-3 pr-8 text-left font-mono text-[13px] leading-snug text-slate-800 focus:bg-slate-100"
+                              >
+                                <span className="line-clamp-3 break-all">{t}</span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <button type="button" className={lightBtn} onClick={exportCsv}>
                         Export CSV
@@ -584,8 +667,8 @@ export function LogTable({ rows }: Props) {
                     </div>
                   </div>
 
-                  <p className="text-xs text-slate-500">
-                    <span className="font-medium tabular-nums text-slate-800">
+                  <p className="text-sm text-slate-600">
+                    <span className="font-semibold tabular-nums text-slate-900">
                       {filteredEntries.length.toLocaleString()}
                     </span>{" "}
                     in view · pool {livePool.length} templates from {rows.length.toLocaleString()}{" "}
@@ -604,7 +687,7 @@ export function LogTable({ rows }: Props) {
                       aria-label="Live event log"
                     >
                       <div
-                        className={`${GRID} border-b border-slate-200 bg-slate-50 px-2 py-2.5 text-left text-xs font-medium uppercase tracking-wide text-slate-500`}
+                        className={`${GRID} border-b border-slate-200 bg-slate-50 px-2 py-3 text-left text-[13px] font-semibold uppercase tracking-wide text-slate-600`}
                       >
                         <span className="sr-only">Priority</span>
                         <span aria-hidden className="block w-6" />
@@ -642,18 +725,18 @@ export function LogTable({ rows }: Props) {
                               }}
                             >
                               <PriorityDot event={row.event} />
-                              <span className="flex items-center font-mono text-xs text-slate-500">
+                              <span className="flex items-center font-mono text-sm font-medium tabular-nums text-slate-600">
                                 {entry.liveSeq}
                               </span>
-                              <span className="flex items-center font-mono text-[11px] leading-tight text-slate-800">
+                              <span className="flex items-center font-mono text-sm font-medium leading-snug text-slate-800">
                                 <HighlightText text={row.timestamp} query={queryForHighlight} />
                               </span>
                               <span className="flex min-w-0 items-center">
-                                <span className="truncate rounded border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono text-[11px] text-slate-800">
+                                <span className="truncate rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 font-mono text-[13px] font-medium leading-snug text-slate-900">
                                   <HighlightText text={row.event} query={queryForHighlight} />
                                 </span>
                               </span>
-                              <span className="flex items-center font-mono text-[11px] text-slate-600">
+                              <span className="flex items-center font-mono text-xs font-medium text-slate-600">
                                 <HighlightText
                                   text={
                                     row.apiKey.length > 14
@@ -740,37 +823,39 @@ export function LogTable({ rows }: Props) {
                 <div className="border-b border-slate-100 px-5 py-4">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                      <h2 className="text-lg font-semibold text-slate-900">Throughput</h2>
-                      <p className="text-sm text-slate-500">
+                      <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
+                        Throughput
+                      </h2>
+                      <p className="text-sm leading-relaxed text-slate-600">
                         Estimated rate in the current buffer window. Charts use the same filters as
                         the inbox above.
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                      <p className="text-sm font-semibold uppercase tracking-wide text-slate-600">
                         Ingestion
                       </p>
-                      <p className="flex items-center justify-end gap-1.5 text-2xl font-semibold text-emerald-700">
+                      <p className="flex items-center justify-end gap-1.5 text-3xl font-semibold text-emerald-700">
                         {throughputLabel}
                         <TrendingUp className="size-5" aria-hidden />
                       </p>
                     </div>
                   </div>
-                  <dl className="mt-4 grid grid-cols-2 gap-4 border-t border-slate-100 pt-4 text-sm sm:grid-cols-3">
+                  <dl className="mt-4 grid grid-cols-2 gap-4 border-t border-slate-100 pt-4 text-[15px] sm:grid-cols-3">
                     <div>
-                      <dt className="text-slate-500">In view</dt>
+                      <dt className="text-slate-600">In view</dt>
                       <dd className="font-semibold tabular-nums text-slate-900">
                         {filteredEntries.length}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-slate-500">Buffer fill</dt>
+                      <dt className="text-slate-600">Buffer fill</dt>
                       <dd className="font-semibold tabular-nums text-slate-900">
                         {liveBuffer.length}/{LIVE_POOL_SIZE}
                       </dd>
                     </div>
                     <div>
-                      <dt className="text-slate-500">Stream</dt>
+                      <dt className="text-slate-600">Stream</dt>
                       <dd className="font-semibold text-slate-900">
                         {livePaused ? "Paused" : "Live"}
                       </dd>
@@ -778,7 +863,7 @@ export function LogTable({ rows }: Props) {
                   </dl>
                 </div>
                 <div className="border-b border-slate-100 px-2 pb-2">
-                  <p className="px-3 pt-3 text-xs font-medium text-slate-500">
+                  <p className="px-3 pt-3 text-sm font-semibold text-slate-600">
                     <span className="mr-2 inline-block size-2 rounded-full bg-emerald-600" />
                     Event volume (visible window)
                   </p>
