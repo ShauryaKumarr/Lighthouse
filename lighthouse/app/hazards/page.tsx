@@ -1,6 +1,7 @@
 "use client";
 
 import { useData } from "@/lib/data-context";
+import { PageHero } from "@/components/PageHero";
 import { HazardHeatmap } from "@/components/hazards/HazardHeatmap";
 import { RegulationTags } from "@/components/hazards/RegulationTags";
 import { HazardTrendChart } from "@/components/hazards/HazardTrendChart";
@@ -28,21 +29,21 @@ export default function HazardsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Hazard Map</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Aggregate view of all risk signals detected across the full audit
-          window. Understand which hazard classes co-occur and map them to
-          regulatory frameworks.
-        </p>
-      </div>
+    <div>
+      <PageHero
+        kicker="Risk intelligence"
+        title="Hazard map"
+        description="Aggregate view of risk signals across the audit window. See which hazard classes co-occur and how they map to regulatory frameworks."
+        maxWidth="7xl"
+      />
 
-      <HazardTrendChart lifecycles={lifecycles} />
+      <div className="mx-auto max-w-7xl space-y-10 px-4 py-10 sm:px-6 lg:px-8">
+        <HazardTrendChart lifecycles={lifecycles} />
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <HazardHeatmap lifecycles={lifecycles} />
-        <RegulationTags metrics={metrics} />
+        <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
+          <HazardHeatmap lifecycles={lifecycles} />
+          <RegulationTags metrics={metrics} />
+        </div>
       </div>
     </div>
   );

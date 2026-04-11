@@ -50,9 +50,7 @@ function BriefBlock({
 }) {
   return (
     <div className="space-y-1.5">
-      <h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-        {label}
-      </h4>
+      <h4 className="pro-kicker text-muted-foreground">{label}</h4>
       <div className="text-sm leading-relaxed text-foreground/95">{children}</div>
     </div>
   );
@@ -66,11 +64,12 @@ export function DiagnosticFindings({ findings }: Props) {
 
   return (
     <Card className="border-coral/30">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-coral animate-beacon-pulse" />
-            Diagnostic Findings
+      <CardHeader className="space-y-2 pb-4">
+        <p className="pro-kicker text-brand">Diagnostic intelligence</p>
+        <div className="flex items-center justify-between gap-4">
+          <CardTitle className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+            <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-coral animate-beacon-pulse" />
+            Findings
           </CardTitle>
           <div className="flex items-center gap-2">
             {criticalCount > 0 && (
@@ -91,9 +90,9 @@ export function DiagnosticFindings({ findings }: Props) {
             )}
           </div>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Each finding includes a reviewer brief: the issue, what the model/pipeline did, and why it
-          matters. Expand to read the full plan.
+        <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
+          Each row includes a reviewer brief: the issue, what the model or pipeline did, and why it
+          matters. Expand to read the full remediation context.
         </p>
       </CardHeader>
       <CardContent className="space-y-2">

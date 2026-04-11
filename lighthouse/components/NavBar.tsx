@@ -16,22 +16,44 @@ export function NavBar() {
   const pathname = usePathname();
 
   return (
-    <nav className="bg-navy text-fog border-b border-ocean">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <LighthouseLogo className="h-9 w-9" />
-            <div>
-              <span className="text-lg font-bold tracking-tight text-beacon">
-                LIGHTHOUSE
-              </span>
-              <span className="ml-2 text-xs font-medium text-fog/60 hidden sm:inline">
-                Audit Dashboard
-              </span>
-            </div>
-          </Link>
+    <nav className="sticky top-0 z-50 border-b border-border/60 bg-card/85 backdrop-blur-md supports-[backdrop-filter]:bg-card/75">
+      <div className="mx-auto flex h-[3.25rem] max-w-7xl items-center gap-6 px-4 sm:px-6 lg:px-8">
+        <Link href="/" className="flex shrink-0 items-center gap-2.5">
+          <LighthouseLogo className="h-8 w-8" />
+          <div className="leading-tight">
+            <span className="block text-[13px] font-semibold tracking-[0.12em] text-foreground">
+              LIGHTHOUSE
+            </span>
+            <span className="hidden text-[10px] font-medium text-muted-foreground sm:block">
+              Audit console
+            </span>
+          </div>
+        </Link>
 
-          <div className="flex items-center gap-1">
+        <div className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 md:flex">
+          {NAV_ITEMS.map((item) => {
+            const isActive =
+              item.href === "/"
+                ? pathname === "/"
+                : pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`relative rounded-md px-3 pb-2.5 pt-2 text-[13px] font-medium transition-colors ${
+                  isActive
+                    ? "text-foreground after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-full after:bg-brand"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-1 items-center justify-end gap-2 md:flex-none">
+          <div className="flex items-center gap-0.5 overflow-x-auto md:hidden">
             {NAV_ITEMS.map((item) => {
               const isActive =
                 item.href === "/"
@@ -41,18 +63,16 @@ export function NavBar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                    isActive
-                      ? "bg-ocean text-beacon"
-                      : "text-fog/70 hover:bg-ocean/50 hover:text-fog"
+                  className={`shrink-0 rounded-md px-2 py-1.5 text-xs font-medium ${
+                    isActive ? "bg-muted text-foreground" : "text-muted-foreground"
                   }`}
                 >
-                  {item.label}
+                  {item.label.replace(" Overview", "").replace(" Map", "")}
                 </Link>
               );
             })}
-            <ThemeToggle />
           </div>
+          <ThemeToggle />
         </div>
       </div>
     </nav>

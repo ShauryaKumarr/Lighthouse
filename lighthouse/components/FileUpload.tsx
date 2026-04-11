@@ -20,13 +20,15 @@ export function FileUpload() {
 
   if (!isOpen) {
     return (
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-border/60 bg-card/60 px-4 py-3 shadow-sm shadow-black/10 dark:bg-card/40 dark:shadow-black/25">
         <span className="text-xs text-muted-foreground">
-          Source: <span className="font-mono text-foreground/80">{dataSource}</span>
+          Source{" "}
+          <span className="font-mono text-[13px] text-foreground/90">{dataSource}</span>
         </span>
         <button
+          type="button"
           onClick={() => setIsOpen(true)}
-          className="text-xs text-beacon hover:underline"
+          className="rounded-md bg-brand px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-brand/90"
         >
           Upload custom logs
         </button>

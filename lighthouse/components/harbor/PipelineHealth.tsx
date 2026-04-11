@@ -1,6 +1,12 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import type { DerivedMetrics } from "@/lib/types";
 
 interface Props {
@@ -68,11 +74,14 @@ export function PipelineHealth({ metrics }: Props) {
 
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">Pipeline Health</CardTitle>
-        <p className="text-xs text-muted-foreground">
-          Key performance indicators vs. recommended targets.
-        </p>
+      <CardHeader className="space-y-1.5 pb-3">
+        <p className="pro-kicker text-brand">Throughput & quality</p>
+        <CardTitle className="text-lg font-semibold tracking-tight">
+          Pipeline health
+        </CardTitle>
+        <CardDescription className="text-sm leading-relaxed">
+          Key indicators versus recommended operating targets for this audit window.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {gauges.map((g) => {

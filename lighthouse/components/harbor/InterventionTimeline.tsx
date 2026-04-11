@@ -9,7 +9,13 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import type { DerivedMetrics } from "@/lib/types";
 
 interface Props {
@@ -24,10 +30,14 @@ export function InterventionTimeline({ metrics }: Props) {
 
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">
-          Request Volume Over Audit Window
+      <CardHeader className="space-y-1.5 pb-3">
+        <p className="pro-kicker text-brand">Load profile</p>
+        <CardTitle className="text-lg font-semibold tracking-tight">
+          Request volume
         </CardTitle>
+        <CardDescription className="text-sm">
+          Requests observed across the simulated audit window (hourly buckets).
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="h-64">

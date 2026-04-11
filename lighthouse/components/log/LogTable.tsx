@@ -407,33 +407,29 @@ export function LogTable({ rows }: Props) {
     "inline-flex h-8 items-center gap-1 border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800 shadow-sm hover:bg-slate-50";
 
   return (
-    <div className="min-h-screen bg-[#2e2e32] text-slate-900 antialiased">
-      <header className="bg-gradient-to-r from-[#4a0d18] via-[#6b1024] to-[#8b1538] px-4 py-8 text-white sm:px-8 lg:px-12">
-        <div className="mx-auto flex max-w-[1400px] flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+    <div className="min-h-screen bg-log-shell text-slate-900 antialiased">
+      <header className="bg-gradient-to-br from-[#060d14] via-[#0c1826] to-[#122438] px-4 py-10 text-white sm:px-8 lg:px-12">
+        <div className="mx-auto flex max-w-[1400px] flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-[15px] font-semibold text-white/85">Inhibitor audit console</p>
-            <h1 className="mt-1 text-4xl font-semibold tracking-tight sm:text-5xl">
+            <p className="pro-kicker text-brand">Inhibitor audit console</p>
+            <h1 className="mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">
               Log operations
             </h1>
-            <p className="mt-2 max-w-xl text-base leading-relaxed text-white/80">
+            <p className="mt-3 max-w-xl text-base leading-relaxed text-white/75">
               High-rate tail: dense sub-second bursts, short pauses, and auto-scroll so the inbox
               stays in motion. Buffer holds up to {LIVE_POOL_SIZE} events.
             </p>
           </div>
           <div className="flex flex-wrap items-end gap-8 lg:justify-end">
             <div>
-              <p className="text-sm font-medium uppercase tracking-wide text-white/65">
-                Archive depth
-              </p>
+              <p className="pro-kicker text-white/55">Archive depth</p>
               <p className="text-4xl font-semibold tabular-nums tracking-tight sm:text-5xl">
                 {rows.length.toLocaleString()}
               </p>
               <p className="text-sm text-white/75">events on file</p>
             </div>
-            <div className="border-l border-white/25 pl-8">
-              <p className="text-sm font-medium uppercase tracking-wide text-white/65">
-                Rolling buffer
-              </p>
+            <div className="border-l border-white/20 pl-8">
+              <p className="pro-kicker text-white/55">Rolling buffer</p>
               <p className="text-4xl font-semibold tabular-nums tracking-tight sm:text-5xl">
                 {liveBuffer.length}
                 <span className="text-xl font-normal text-white/60">
@@ -444,7 +440,7 @@ export function LogTable({ rows }: Props) {
             </div>
             <Link
               href="/"
-              className="border border-white/30 bg-white/10 px-4 py-2.5 text-[15px] font-semibold text-white hover:bg-white/20"
+              className="border border-white/25 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-white/15"
             >
               ← Harbor overview
             </Link>
@@ -452,7 +448,7 @@ export function LogTable({ rows }: Props) {
         </div>
       </header>
 
-      <nav className="border-b border-zinc-700 bg-[#262629]">
+      <nav className="border-b border-zinc-700/80 bg-[#1e1e22]">
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-stretch gap-1 px-4 sm:px-8 lg:px-12">
           {TABS.map((tab) => (
             <button
@@ -461,7 +457,7 @@ export function LogTable({ rows }: Props) {
               onClick={() => setActiveTab(tab.id)}
               className={`relative px-4 py-3.5 text-[15px] font-semibold transition-colors ${
                 activeTab === tab.id
-                  ? "text-zinc-50 after:absolute after:bottom-0 after:left-4 after:right-4 after:h-0.5 after:bg-[#e85d5d]"
+                  ? "text-zinc-50 after:absolute after:bottom-0 after:left-4 after:right-4 after:h-0.5 after:rounded-full after:bg-brand"
                   : "text-zinc-400 hover:text-zinc-200"
               }`}
             >
