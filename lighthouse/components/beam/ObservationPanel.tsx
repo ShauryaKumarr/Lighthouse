@@ -1,8 +1,8 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { OBSERVATION_LABELS } from "@/lib/types";
+import { Eye } from "lucide-react";
 
 interface Props {
   observations: string[];
@@ -11,16 +11,19 @@ interface Props {
 export function ObservationPanel({ observations }: Props) {
   if (observations.length === 0) {
     return (
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Observations Detected</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="rounded-2xl border border-border/60 bg-card/50 backdrop-blur-sm overflow-hidden">
+        <div className="px-5 py-3 border-b border-border/40 flex items-center gap-2">
+          <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            Observations
+          </span>
+        </div>
+        <div className="px-5 py-8 text-center">
           <p className="text-sm text-muted-foreground">
-            No risk observations flagged for this request.
+            No risk observations flagged.
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
@@ -30,37 +33,40 @@ export function ObservationPanel({ observations }: Props) {
   }
 
   return (
-    <Card className="border-coral/30">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-coral" />
-          Observations Detected
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          {Object.entries(counts).map(([key, count]) => (
-            <div
-              key={key}
-              className="flex items-center justify-between rounded-md bg-coral/5 px-3 py-2"
-            >
-              <div>
-                <p className="text-sm font-medium">
-                  {OBSERVATION_LABELS[key] ?? key.replace(/_/g, " ")}
-                </p>
-                <p className="text-xs text-muted-foreground font-mono">
-                  {key}
-                </p>
-              </div>
-              {count > 1 && (
-                <Badge variant="secondary" className="text-xs">
-                  x{count}
-                </Badge>
-              )}
-            </div>
-          ))}
+    <div className="rounded-2xl border border-coral/20 bg-card/50 backdrop-blur-sm overflow-hidden">
+      <div className="px-5 py-3 border-b border-coral/10 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-2 rounded-full bg-coral" />
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            Observations
+          </span>
         </div>
-      </CardContent>
-    </Card>
+        <span className="text-xs text-coral font-medium">
+          {observations.length} detected
+        </span>
+      </div>
+      <div className="divide-y divide-border/20">
+        {Object.entries(counts).map(([key, count]) => (
+          <div
+            key={key}
+            className="px-5 py-3.5 flex items-center justify-between gap-3"
+          >
+            <div className="min-w-0">
+              <p className="text-sm font-medium leading-snug">
+                {OBSERVATION_LABELS[key] ?? key.replace(/_/g, " ")}
+              </p>
+              <p className="text-[11px] text-muted-foreground font-mono mt-0.5 truncate">
+                {key}
+              </p>
+            </div>
+            {count > 1 && (
+              <Badge variant="secondary" className="text-[10px] shrink-0">
+                &times;{count}
+              </Badge>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

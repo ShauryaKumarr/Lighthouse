@@ -51,6 +51,18 @@ export interface RequestLifecycle {
   eventCounts: Record<string, number>;
 }
 
+export interface DiagnosticFinding {
+  id: string;
+  priority: number;
+  severity: "critical" | "high" | "medium" | "low";
+  title: string;
+  description: string;
+  metric: string;
+  target: string;
+  recommendation: string;
+  auditFlag: boolean;
+}
+
 export interface DerivedMetrics {
   totalRequests: number;
   totalEvents: number;
@@ -65,6 +77,17 @@ export interface DerivedMetrics {
   observationFrequency: Record<string, number>;
   predictionFrequency: Record<string, number>;
   timelinePoints: { time: string; count: number }[];
+
+  ruleBindingMissRate: number;
+  avgObservationsPerRequest: number;
+  avgPredictionsPerRequest: number;
+  avgEmbeddingsPerRequest: number;
+  avgLlmCallsPerRequest: number;
+  authFailures: number;
+  validationPassRate: number;
+  topObservationKey: string;
+  topObservationPct: number;
+  findings: DiagnosticFinding[];
 }
 
 export const EVENT_CATEGORY: Record<string, string> = {
