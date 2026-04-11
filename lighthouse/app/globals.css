@@ -140,16 +140,22 @@
   }
   html {
     font-family: var(--font-dm-sans), "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    /* Keep root rem stable for spacing scale (Tailwind rem = 16px). */
     font-size: 16px;
     font-weight: 400;
-    line-height: 16px;
+    line-height: normal;
     @apply font-sans;
   }
   body {
-    font-size: 16px;
+    font-family: var(--font-dm-sans), "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size: 24px;
     font-weight: 400;
-    line-height: 16px;
-    @apply bg-background font-sans text-foreground antialiased;
+    line-height: 32px;
+    color: rgb(27, 49, 57);
+    @apply bg-background antialiased;
+  }
+  .dark body {
+    color: var(--foreground);
   }
 }
 

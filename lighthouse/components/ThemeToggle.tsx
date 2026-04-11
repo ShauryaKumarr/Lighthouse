@@ -18,7 +18,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={() => setDark((d) => !d)}
-      className="rounded-md p-2.5 text-lg text-white/55 transition-colors hover:bg-white/10 hover:text-white"
+      className="rounded-md p-2.5 text-xl text-white/80 transition-colors hover:bg-white/10 hover:text-white hover:[text-shadow:0_0_20px_rgba(255,255,255,0.35)]"
       title={dark ? "Switch to light mode" : "Switch to dark mode"}
     >
       {dark ? "☀️" : "🌙"}
