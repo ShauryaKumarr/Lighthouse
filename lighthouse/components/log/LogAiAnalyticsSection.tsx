@@ -41,7 +41,7 @@ const tipStyle = {
 };
 
 /**
- * Sticky “AI generated analytics” band — pins below the log tab bar while scrolling
+ * Sticky “AI Generated Analytics” band — pins below the log tab bar while scrolling
  * so it reads as its own workspace once you move past the hero metrics.
  */
 export function LogAiAnalyticsSection() {
@@ -49,8 +49,8 @@ export function LogAiAnalyticsSection() {
     <section className="sticky top-[52px] z-40 mb-6 border-y border-slate-400/60 bg-[#e8ecf2] shadow-[0_4px_18px_rgba(15,23,42,0.12)]">
       <div className="border-b border-slate-300/80 bg-[#f4f6fa] px-5 py-5 sm:px-6">
         <p className="pro-kicker text-brand">Model-assisted readout</p>
-        <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
-          AI generated analytics
+        <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
+          AI Generated Analytics
         </h2>
         <div className="mt-5 max-w-5xl space-y-4 text-sm leading-relaxed text-slate-600 sm:text-[15px]">
           <p>

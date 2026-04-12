@@ -477,11 +477,10 @@ export function LogTable({ rows }: Props) {
           <div
             ref={workspaceSectionRef}
             id="log-section-workspace"
-            className="scroll-mt-[72px] grid grid-cols-1 items-start gap-6 lg:grid-cols-12"
+            className="scroll-mt-[72px] overflow-hidden rounded-md border border-slate-300 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md"
           >
-          <aside className="lg:col-span-4">
-            <div className="border border-slate-300 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md lg:sticky lg:top-[120px] lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto">
-              <div className="flex items-start justify-between gap-2 border-b border-slate-200 bg-slate-50 px-3 py-3">
+            <div className="grid grid-cols-1 md:grid-cols-12 md:divide-x md:divide-slate-200">
+              <div className="flex items-start justify-between gap-2 border-b border-slate-200 bg-slate-50 px-3 py-3 md:col-span-4">
                 <div>
                   <div className="flex items-center gap-2">
                     <h2 className="text-sm font-bold uppercase tracking-wide text-slate-900">
@@ -511,6 +510,37 @@ export function LogTable({ rows }: Props) {
                 </button>
               </div>
 
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 md:col-span-8">
+                <div className="min-w-0">
+                  <h2 className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">
+                    Activity
+                  </h2>
+                  <p className="text-xs leading-relaxed text-slate-600">
+                    Dense bursts (tens of ms). Inbox auto-scrolls to newest. Priority: green → yellow
+                    → orange → red.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className={lightBtn}
+                  onClick={() => setLivePaused((p) => !p)}
+                >
+                  {livePaused ? (
+                    <>
+                      <Play className="size-3.5" aria-hidden />
+                      Resume
+                    </>
+                  ) : (
+                    <>
+                      <Pause className="size-3.5" aria-hidden />
+                      Pause
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <aside className="min-h-0 md:col-span-4">
+                <div className="lg:sticky lg:top-[120px] lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto">
               <div className="border-b border-slate-200 px-3 py-3">
                 <div className="flex items-end justify-between gap-2">
                   <div>
@@ -628,41 +658,12 @@ export function LogTable({ rows }: Props) {
                   </table>
                 )}
               </div>
-            </div>
-          </aside>
-
-          <div ref={activitySectionRef} id="log-section-activity" className="scroll-mt-[72px] lg:col-span-8">
-              <section className="overflow-hidden border border-slate-300 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md">
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
-                  <div>
-                    <h2 className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">
-                      Activity
-                    </h2>
-                    <p className="text-xs leading-relaxed text-slate-600">
-                      Dense bursts (tens of ms). Inbox auto-scrolls to newest. Priority: green → yellow
-                      → orange → red.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className={lightBtn}
-                    onClick={() => setLivePaused((p) => !p)}
-                  >
-                    {livePaused ? (
-                      <>
-                        <Play className="size-3.5" aria-hidden />
-                        Resume
-                      </>
-                    ) : (
-                      <>
-                        <Pause className="size-3.5" aria-hidden />
-                        Pause
-                      </>
-                    )}
-                  </button>
                 </div>
+              </aside>
 
-                <div className="border-b border-slate-100 p-4 space-y-4">
+          <div ref={activitySectionRef} id="log-section-activity" className="min-h-0 md:col-span-8">
+              <section className="overflow-hidden bg-white transition-shadow duration-200 hover:shadow-[inset_0_1px_0_0_rgb(226,232,240)]">
+                <div className="border-b border-slate-200 p-4 space-y-4">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                     <div className="min-w-0 flex-1 space-y-1.5">
                       <label
@@ -910,6 +911,7 @@ export function LogTable({ rows }: Props) {
                 </div>
               </section>
           </div>
+            </div>
           </div>
 
           <div
