@@ -408,8 +408,8 @@ export function LogTable({ rows }: Props) {
     "inline-flex h-8 items-center gap-1 border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800 shadow-sm hover:bg-slate-50";
 
   return (
-    <div className="min-h-screen bg-[#d4d8df] text-foreground antialiased">
-      <header className="border-b border-slate-300/90 bg-[#e6e9ef] px-4 py-10 sm:px-8 lg:px-12">
+    <div className="min-h-screen bg-[#b9c0ca] text-foreground antialiased">
+      <header className="border-b border-slate-400/90 bg-[#c5ccd6] px-4 py-10 sm:px-8 lg:px-12">
         <div className="mx-auto flex max-w-[1400px] flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="pro-kicker text-brand">Inhibitor audit console</p>
@@ -449,17 +449,17 @@ export function LogTable({ rows }: Props) {
         </div>
       </header>
 
-      <nav className="border-b border-slate-300/80 bg-[#d8dce6]">
-        <div className="mx-auto flex max-w-[1400px] flex-wrap items-stretch gap-1 px-4 sm:px-8 lg:px-12">
+      <nav className="sticky top-0 z-50 flex h-[52px] min-h-[52px] items-stretch border-b border-slate-900/40 bg-[#2d323b] shadow-md">
+        <div className="mx-auto flex w-full max-w-[1400px] flex-wrap items-stretch gap-0.5 px-4 sm:px-8 lg:px-12">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`relative px-4 py-3.5 text-[15px] font-semibold transition-colors ${
+              className={`relative flex items-center px-4 py-0 text-[15px] font-semibold transition-colors ${
                 activeTab === tab.id
-                  ? "text-[rgb(27,49,57)] after:absolute after:bottom-0 after:left-4 after:right-4 after:h-0.5 after:rounded-full after:bg-brand"
-                  : "text-slate-500 hover:text-[rgb(27,49,57)]"
+                  ? "text-white after:absolute after:bottom-1 after:left-4 after:right-4 after:h-0.5 after:rounded-full after:bg-brand"
+                  : "text-slate-400 hover:text-slate-100"
               }`}
             >
               {tab.label}
@@ -471,7 +471,7 @@ export function LogTable({ rows }: Props) {
       <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-8 lg:px-12">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           <aside className="lg:col-span-4">
-            <div className="border border-slate-300 bg-white shadow-sm lg:sticky lg:top-4 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+            <div className="border border-slate-300 bg-white shadow-sm lg:sticky lg:top-[120px] lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto">
               <div className="flex items-start justify-between gap-2 border-b border-slate-200 bg-slate-50 px-3 py-3">
                 <div>
                   <div className="flex items-center gap-2">
