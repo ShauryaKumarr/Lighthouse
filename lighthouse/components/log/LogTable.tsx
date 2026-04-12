@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import type { RawLogRow } from "@/lib/types";
 import { EVENT_CATEGORY, CATEGORY_COLORS } from "@/lib/types";
+import { LogAiAnalyticsSection } from "@/components/log/LogAiAnalyticsSection";
+import { LogAlertsSection } from "@/components/log/LogAlertsSection";
 import { LogSummaryCharts } from "@/components/log/LogSummaryCharts";
 import { LogVolumeAreaChart } from "@/components/log/LogVolumeAreaChart";
 import { getLogPriority, priorityVisual } from "@/lib/log-priority";
@@ -164,7 +166,10 @@ export function LogTable({ rows }: Props) {
   const liveSeqRef = useRef(0);
   const searchRef = useRef<HTMLInputElement>(null);
   const scrollParentRef = useRef<HTMLDivElement>(null);
-  const streamSectionRef = useRef<HTMLElement>(null);
+  const workspaceSectionRef = useRef<HTMLDivElement>(null);
+  const activitySectionRef = useRef<HTMLDivElement>(null);
+  const analyticsSectionRef = useRef<HTMLDivElement>(null);
+  const alertsSectionRef = useRef<HTMLDivElement>(null);
 
   const livePool = useMemo(() => buildLivePool(rows, LIVE_POOL_SIZE), [rows]);
   const livePoolRef = useRef(livePool);
@@ -274,12 +279,6 @@ export function LogTable({ rows }: Props) {
     el.scrollTop = 0;
   }, [newestStreamId]);
 
-  useEffect(() => {
-    if (activeTab === "stream" && streamSectionRef.current) {
-      streamSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [activeTab]);
-
   const eventTypes = useMemo(() => {
     const types = new Set<string>();
     for (const r of livePool) types.add(r.event);
@@ -288,12 +287,6 @@ export function LogTable({ rows }: Props) {
 
   const filteredEntries = useMemo(() => {
     let list = liveBuffer;
-    if (activeTab === "alerts") {
-      list = list.filter((e) => {
-        const pr = getLogPriority(e.row.event);
-        return pr === "critical" || pr === "high";
-      });
-    }
     if (eventFilter) {
       list = list.filter((e) => e.row.event === eventFilter);
     }
@@ -308,7 +301,7 @@ export function LogTable({ rows }: Props) {
       );
     }
     return list;
-  }, [liveBuffer, eventFilter, deferredQuery, activeTab]);
+  }, [liveBuffer, eventFilter, deferredQuery]);
 
   const chartRows = useMemo(
     () => filteredEntries.map((e) => e.row),
@@ -360,8 +353,20 @@ export function LogTable({ rows }: Props) {
     return `${Math.round(throughputChartRows.length / mins)} / min`;
   }, [throughputChartRows]);
 
-  const showStream = activeTab !== "analytics";
-  const showCharts = activeTab !== "stream";
+  const scrollToTab = useCallback((tab: DashboardTab) => {
+    setActiveTab(tab);
+    requestAnimationFrame(() => {
+      const target =
+        tab === "dashboard"
+          ? workspaceSectionRef.current
+          : tab === "stream"
+            ? activitySectionRef.current
+            : tab === "analytics"
+              ? analyticsSectionRef.current
+              : alertsSectionRef.current;
+      target?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, []);
 
   // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual scroll state is intentionally non-memoizable
   const rowVirtualizer = useVirtualizer({
@@ -407,8 +412,8 @@ export function LogTable({ rows }: Props) {
     "inline-flex h-8 items-center gap-1 border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800 shadow-sm hover:bg-slate-50";
 
   return (
-    <div className="min-h-screen bg-background text-foreground antialiased">
-      <header className="border-b border-slate-200/90 bg-gradient-to-b from-white via-[#fafbfc] to-[#f4f6f8] px-4 py-10 sm:px-8 lg:px-12">
+    <div className="min-h-screen bg-[#b9c0ca] text-foreground antialiased">
+      <header className="border-b border-slate-400/90 bg-[#c5ccd6] px-4 py-10 sm:px-8 lg:px-12">
         <div className="mx-auto flex max-w-[1400px] flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="pro-kicker text-brand">Inhibitor audit console</p>
@@ -448,17 +453,17 @@ export function LogTable({ rows }: Props) {
         </div>
       </header>
 
-      <nav className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-[1400px] flex-wrap items-stretch gap-1 px-4 sm:px-8 lg:px-12">
+      <nav className="sticky top-0 z-50 flex h-[52px] min-h-[52px] items-stretch border-b border-slate-900/40 bg-[#2d323b] shadow-md">
+        <div className="mx-auto flex w-full max-w-[1400px] flex-wrap items-stretch gap-1 px-4 sm:px-8 lg:px-12">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={`relative px-4 py-3.5 text-[15px] font-semibold transition-colors ${
+              onClick={() => scrollToTab(tab.id)}
+              className={`relative my-1 flex items-center rounded-md px-3.5 py-1 text-[15px] font-semibold transition-all duration-200 hover:bg-white/10 hover:text-slate-100 hover:ring-1 hover:ring-white/15 active:scale-[0.98] ${
                 activeTab === tab.id
-                  ? "text-[rgb(27,49,57)] after:absolute after:bottom-0 after:left-4 after:right-4 after:h-0.5 after:rounded-full after:bg-brand"
-                  : "text-slate-500 hover:text-[rgb(27,49,57)]"
+                  ? "text-white ring-1 ring-white/90 after:absolute after:bottom-1 after:left-3 after:right-3 after:h-0.5 after:rounded-full after:bg-brand"
+                  : "text-slate-400"
               }`}
             >
               {tab.label}
@@ -468,9 +473,14 @@ export function LogTable({ rows }: Props) {
       </nav>
 
       <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-8 lg:px-12">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="space-y-6">
+          <div
+            ref={workspaceSectionRef}
+            id="log-section-workspace"
+            className="scroll-mt-[72px] grid grid-cols-1 items-start gap-6 lg:grid-cols-12"
+          >
           <aside className="lg:col-span-4">
-            <div className="border border-slate-300 bg-white shadow-sm lg:sticky lg:top-4 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+            <div className="border border-slate-300 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md lg:sticky lg:top-[120px] lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto">
               <div className="flex items-start justify-between gap-2 border-b border-slate-200 bg-slate-50 px-3 py-3">
                 <div>
                   <div className="flex items-center gap-2">
@@ -621,12 +631,8 @@ export function LogTable({ rows }: Props) {
             </div>
           </aside>
 
-          <div className="space-y-6 lg:col-span-8">
-            {showStream ? (
-              <section
-                ref={streamSectionRef}
-                className="overflow-hidden border border-slate-300 bg-white shadow-sm"
-              >
+          <div ref={activitySectionRef} id="log-section-activity" className="scroll-mt-[72px] lg:col-span-8">
+              <section className="overflow-hidden border border-slate-300 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md">
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
                   <div>
                     <h2 className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">
@@ -761,7 +767,6 @@ export function LogTable({ rows }: Props) {
                     </span>{" "}
                     in view · pool {livePool.length} templates from {rows.length.toLocaleString()}{" "}
                     total
-                    {activeTab === "alerts" ? " · alerts only" : ""}
                     {searchPending ? " · updating…" : null}
                   </p>
                 </div>
@@ -904,10 +909,25 @@ export function LogTable({ rows }: Props) {
                   </aside>
                 </div>
               </section>
-            ) : null}
+          </div>
+          </div>
 
-            {showCharts ? (
-              <section className="border border-slate-300 bg-white shadow-sm">
+          <div
+            ref={analyticsSectionRef}
+            id="log-section-ai"
+            className="scroll-mt-[72px] transition-opacity duration-200 hover:opacity-[0.99]"
+          >
+            <LogAiAnalyticsSection />
+          </div>
+
+          <div ref={alertsSectionRef} id="log-section-alerts" className="scroll-mt-[72px]">
+            <LogAlertsSection />
+          </div>
+
+          <section
+            id="log-section-charts"
+            className="scroll-mt-[72px] border border-slate-300 bg-white shadow-sm transition-shadow duration-200 hover:shadow-md"
+          >
                 <div className="border-b border-slate-100 px-5 py-4">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
@@ -964,9 +984,7 @@ export function LogTable({ rows }: Props) {
                   </p>
                   <LogSummaryCharts rows={throughputChartRows} />
                 </div>
-              </section>
-            ) : null}
-          </div>
+          </section>
         </div>
       </div>
     </div>
