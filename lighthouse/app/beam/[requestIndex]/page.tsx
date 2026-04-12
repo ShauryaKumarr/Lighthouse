@@ -1,6 +1,13 @@
 "use client";
 
 import { use } from "react";
+
+export function generateStaticParams() {
+  // Generate static params for the first 20 request indices
+  return Array.from({ length: 20 }, (_, i) => ({
+    requestIndex: String(i),
+  }));
+}
 import Link from "next/link";
 import { useData } from "@/lib/data-context";
 import { BeamTimeline } from "@/components/beam/BeamTimeline";
