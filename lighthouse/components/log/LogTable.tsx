@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import type { RawLogRow } from "@/lib/types";
 import { EVENT_CATEGORY, CATEGORY_COLORS } from "@/lib/types";
+import { LogAiAnalyticsSection } from "@/components/log/LogAiAnalyticsSection";
 import { LogSummaryCharts } from "@/components/log/LogSummaryCharts";
 import { LogVolumeAreaChart } from "@/components/log/LogVolumeAreaChart";
 import { getLogPriority, priorityVisual } from "@/lib/log-priority";
@@ -407,8 +408,8 @@ export function LogTable({ rows }: Props) {
     "inline-flex h-8 items-center gap-1 border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-800 shadow-sm hover:bg-slate-50";
 
   return (
-    <div className="min-h-screen bg-background text-foreground antialiased">
-      <header className="border-b border-slate-200/90 bg-gradient-to-b from-white via-[#fafbfc] to-[#f4f6f8] px-4 py-10 sm:px-8 lg:px-12">
+    <div className="min-h-screen bg-[#d4d8df] text-foreground antialiased">
+      <header className="border-b border-slate-300/90 bg-[#e6e9ef] px-4 py-10 sm:px-8 lg:px-12">
         <div className="mx-auto flex max-w-[1400px] flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="pro-kicker text-brand">Inhibitor audit console</p>
@@ -448,7 +449,7 @@ export function LogTable({ rows }: Props) {
         </div>
       </header>
 
-      <nav className="border-b border-slate-200 bg-white">
+      <nav className="border-b border-slate-300/80 bg-[#d8dce6]">
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-stretch gap-1 px-4 sm:px-8 lg:px-12">
           {TABS.map((tab) => (
             <button
@@ -907,7 +908,9 @@ export function LogTable({ rows }: Props) {
             ) : null}
 
             {showCharts ? (
-              <section className="border border-slate-300 bg-white shadow-sm">
+              <>
+                <LogAiAnalyticsSection />
+                <section className="border border-slate-300 bg-white shadow-sm">
                 <div className="border-b border-slate-100 px-5 py-4">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
@@ -965,6 +968,7 @@ export function LogTable({ rows }: Props) {
                   <LogSummaryCharts rows={throughputChartRows} />
                 </div>
               </section>
+              </>
             ) : null}
           </div>
         </div>
