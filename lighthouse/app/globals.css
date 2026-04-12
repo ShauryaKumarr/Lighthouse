@@ -153,30 +153,68 @@
   animation: beam-sweep 0.8s ease-out forwards;
 }
 
-@keyframes log-priority-pulse {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.42;
-    transform: scale(0.88);
-  }
+/* ── Lighthouse scene animations (used by Beam & Landing pages) ── */
+
+@keyframes lighthouse-beam-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-.animate-log-pri-low {
-  animation: log-priority-pulse 2.6s ease-in-out infinite;
+.lighthouse-beam-rotate {
+  animation: lighthouse-beam-rotate 8s linear infinite;
 }
 
-.animate-log-pri-normal {
-  animation: log-priority-pulse 1.85s ease-in-out infinite;
+@keyframes lighthouse-light-pulse {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
 }
 
-.animate-log-pri-high {
-  animation: log-priority-pulse 1.15s ease-in-out infinite;
+.lighthouse-light-pulse {
+  animation: lighthouse-light-pulse 3s ease-in-out infinite;
 }
 
-.animate-log-pri-critical {
-  animation: log-priority-pulse 0.72s ease-in-out infinite;
+@keyframes lighthouse-reflection-shimmer {
+  0%, 100% { opacity: 0.6; transform: scaleX(1); }
+  33% { opacity: 1; transform: scaleX(1.4); }
+  66% { opacity: 0.8; transform: scaleX(0.8); }
+}
+
+.lighthouse-reflection-shimmer {
+  animation: lighthouse-reflection-shimmer 4s ease-in-out infinite;
+}
+
+@keyframes moon-glow-pulse {
+  0%, 100% { opacity: 0.7; transform: translate(50%, -50%) scale(1); }
+  50% { opacity: 1; transform: translate(50%, -50%) scale(1.08); }
+}
+
+.moon-glow-pulse {
+  animation: moon-glow-pulse 6s ease-in-out infinite;
+}
+
+@keyframes moon-reflection-shimmer {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.moon-reflection-shimmer {
+  animation: moon-reflection-shimmer 5s ease-in-out infinite;
+}
+
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.9; }
+}
+
+.star-twinkle {
+  animation: star-twinkle 4s ease-in-out infinite;
+}
+
+@keyframes water-line-drift {
+  0%, 100% { transform: translateX(0); opacity: 0.4; }
+  50% { transform: translateX(12px); opacity: 0.8; }
+}
+
+.water-line-drift {
+  animation: water-line-drift 6s ease-in-out infinite;
 }
