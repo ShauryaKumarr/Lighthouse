@@ -1,0 +1,4 @@
+{
+  "buildCommand": "cd lighthouse && npm run build",
+  "outputDirectory": "lighthouse/out"
+}
