@@ -9,8 +9,10 @@ export function ClientProviders({ children }: { children: ReactNode }) {
   return (
     <TooltipProvider>
       <DataProvider>
-        <NavBar />
-        <main className="flex-1">{children}</main>
+        <div className="relative z-10 flex min-h-full flex-1 flex-col">
+          <NavBar />
+          <main className="flex-1">{children}</main>
+        </div>
       </DataProvider>
     </TooltipProvider>
   );
