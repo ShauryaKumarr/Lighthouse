@@ -49,8 +49,8 @@ export function HazardClassChart({ metrics }: Props) {
         <CardTitle className="text-base">Top Hazard Classes</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-56">
-          <ResponsiveContainer width="100%" height="100%">
+        <div style={{ width: "100%", height: 224 }}>
+          <ResponsiveContainer width="100%" height={224}>
             <BarChart data={combined.slice(0, 8)} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} opacity={0.85} />
               <XAxis

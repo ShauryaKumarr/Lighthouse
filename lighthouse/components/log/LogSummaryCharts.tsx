@@ -108,8 +108,8 @@ export function LogSummaryCharts({ rows }: Props) {
         <h3 className={title}>
           Events by minute (visible window)
         </h3>
-        <div className="mt-3 h-52">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="mt-3" style={{ height: 208 }}>
+          <ResponsiveContainer width="100%" height={208}>
             <BarChart data={byMinute} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={GRID.stroke} vertical={false} />
               <XAxis
@@ -159,8 +159,8 @@ export function LogSummaryCharts({ rows }: Props) {
         <h3 className={title}>
           Top event types
         </h3>
-        <div className="mt-3 h-52">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="mt-3" style={{ height: 208 }}>
+          <ResponsiveContainer width="100%" height={208}>
             <BarChart
               data={topEvents}
               layout="vertical"

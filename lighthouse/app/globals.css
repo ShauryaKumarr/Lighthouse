@@ -111,9 +111,9 @@
   }
   body {
     font-family: var(--font-dm-sans), "DM Sans", ui-sans-serif, system-ui, sans-serif;
-    font-size: 24px;
+    font-size: 16px;
     font-weight: 400;
-    line-height: 32px;
+    line-height: 1.5;
     @apply bg-background text-foreground antialiased;
   }
 }

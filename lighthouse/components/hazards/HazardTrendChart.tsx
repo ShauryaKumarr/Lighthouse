@@ -53,8 +53,8 @@ export function HazardTrendChart({ lifecycles }: Props) {
         <CardTitle className="text-base">Hazard Signals Over Time</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
+        <div style={{ width: "100%", height: 256 }}>
+          <ResponsiveContainer width="100%" height={256}>
             <BarChart data={data}>
               <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} opacity={0.85} />
               <XAxis

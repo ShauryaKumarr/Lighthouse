@@ -35,8 +35,8 @@ export function SeverityDonut({ interventions }: Props) {
         <CardTitle className="text-base">Alert Severity</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-56">
-          <ResponsiveContainer width="100%" height="100%">
+        <div style={{ width: "100%", height: 224 }}>
+          <ResponsiveContainer width="100%" height={224}>
             <PieChart>
               <Pie
                 data={data}

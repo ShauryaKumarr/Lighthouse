@@ -44,8 +44,8 @@ export function LogVolumeAreaChart({ rows }: Props) {
   }
 
   return (
-    <div className="h-56 w-full px-2 pt-2">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="w-full px-2 pt-2" style={{ height: 224 }}>
+      <ResponsiveContainer width="100%" height={224}>
         <AreaChart data={data} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="logVolumeFill" x1="0" y1="0" x2="0" y2="1">
