@@ -392,7 +392,7 @@ export default function LandingPage() {
             transition={{ duration: 0.6 }}
             className="space-y-8"
           >
-            <LighthouseLogo className="h-16 w-16 mx-auto opacity-80" />
+            <LighthouseLogo className="h-16 w-16 mx-auto opacity-80" animate />
             <div className="space-y-4">
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-fog">
                 Ready to Navigate Safely?
