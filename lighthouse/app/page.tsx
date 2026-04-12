@@ -4,7 +4,6 @@ import Link from "next/link";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { Spotlight, SpotlightCard } from "@/components/beam/Spotlight";
-import { LighthouseLogo } from "@/components/LighthouseLogo";
 import {
   Search,
   Shield,
@@ -392,7 +391,6 @@ export default function LandingPage() {
             transition={{ duration: 0.6 }}
             className="space-y-8"
           >
-            <LighthouseLogo className="h-16 w-16 mx-auto opacity-80" animate />
             <div className="space-y-4">
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-fog">
                 Ready to Navigate Safely?

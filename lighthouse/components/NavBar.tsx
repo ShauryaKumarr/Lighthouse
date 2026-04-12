@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { LighthouseLogo } from "./LighthouseLogo";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Home" },
   { href: "/harbor", label: "Harbor Overview" },
   { href: "/beam", label: "The Beam" },
   { href: "/hazards", label: "Hazard Map" },
@@ -80,10 +79,7 @@ export function NavBar() {
         <div className="hidden min-w-0 flex-1 items-center justify-center md:flex">
           <div className="flex items-center gap-2 lg:gap-3 xl:gap-4">
             {NAV_ITEMS.map((item) => {
-              const isActive =
-                item.href === "/"
-                  ? pathname === "/"
-                  : pathname.startsWith(item.href);
+              const isActive = pathname.startsWith(item.href);
               return (
                 <Link
                   key={item.href}
@@ -100,10 +96,7 @@ export function NavBar() {
         <div className="flex flex-1 items-center justify-end md:flex-none md:pl-4">
           <div className="flex max-w-[min(100vw-10rem,28rem)] items-center gap-1.5 overflow-x-auto pb-1 md:hidden">
             {NAV_ITEMS.map((item) => {
-              const isActive =
-                item.href === "/"
-                  ? pathname === "/"
-                  : pathname.startsWith(item.href);
+              const isActive = pathname.startsWith(item.href);
               return (
                 <Link
                   key={item.href}
