@@ -212,3 +212,25 @@
 .water-line-drift {
   animation: water-line-drift 6s ease-in-out infinite;
 }
+
+/* ── Seagull animations (Harbor Overview) ── */
+
+@keyframes seagull-glide {
+  0%   { transform: translateX(-80px) translateY(0px); opacity: 0; }
+  5%   { opacity: 1; }
+  40%  { transform: translateX(38vw) translateY(-22px); }
+  60%  { transform: translateX(58vw) translateY(-8px); }
+  90%  { opacity: 1; }
+  100% { transform: translateX(110vw) translateY(-14px); opacity: 0; }
+}
+
+@keyframes seagull-flap {
+  0%, 100% { transform: scaleY(1); }
+  50%       { transform: scaleY(0.5); }
+}
+
+.seagull-flap {
+  animation: seagull-flap var(--flap-dur, 0.6s) ease-in-out infinite;
+  transform-origin: center;
+}
+

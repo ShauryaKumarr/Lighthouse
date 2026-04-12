@@ -35,7 +35,40 @@ export default function HarborOverview() {
 
   return (
     <PageTransition>
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+    <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+      {/* Seagulls */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden>
+        {[
+          { top: "14%", delay: "0s",  dur: "16s", size: 18, flap: "0.65s", opacity: 0.5 },
+          { top: "32%", delay: "3s",  dur: "16s", size: 13, flap: "0.85s", opacity: 0.38 },
+          { top: "22%", delay: "6s",  dur: "16s", size: 22, flap: "0.55s", opacity: 0.55 },
+          { top: "44%", delay: "9s",  dur: "16s", size: 11, flap: "1.0s",  opacity: 0.32 },
+          { top: "9%",  delay: "12s", dur: "16s", size: 15, flap: "0.75s", opacity: 0.42 },
+        ].map((g, i) => (
+          <span
+            key={i}
+            className="absolute"
+            style={{
+              top: g.top,
+              left: 0,
+              animation: `seagull-glide ${g.dur} ${g.delay} ease-in-out infinite backwards`,
+            }}
+          >
+            <svg
+              width={g.size * 2}
+              height={g.size}
+              viewBox="0 0 32 16"
+              fill="none"
+              className="seagull-flap"
+              style={{ "--flap-dur": g.flap, opacity: g.opacity } as React.CSSProperties}
+            >
+              <path d="M16,8 C12,2 6,1 0,5"  stroke="#5c6b73" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+              <path d="M16,8 C20,2 26,1 32,5" stroke="#5c6b73" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+            </svg>
+          </span>
+        ))}
+      </div>
+
       <div className="space-y-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Harbor Overview</h1>
