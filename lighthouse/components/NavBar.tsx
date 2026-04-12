@@ -13,7 +13,7 @@ const NAV_ITEMS = [
 
 export function NavBar() {
   const pathname = usePathname();
-  const isDark = pathname === "/" || pathname.startsWith("/beam");
+  const isDark = pathname === "/welcome" || pathname.startsWith("/beam");
 
   const navCls = isDark
     ? "sticky top-0 z-50 border-b border-white/[0.06] bg-navy/80 backdrop-blur-xl font-sans"
@@ -62,7 +62,7 @@ export function NavBar() {
     <nav className={navCls}>
       <div className="mx-auto flex min-h-[4.5rem] max-w-7xl items-center gap-8 px-4 sm:gap-10 sm:px-6 lg:min-h-[5rem] lg:gap-12 lg:px-10">
         <Link
-          href="/"
+          href="/harbor"
           className={`flex shrink-0 items-center gap-3 outline-offset-4 focus-visible:outline focus-visible:outline-2 ${isDark ? "focus-visible:outline-beacon" : "focus-visible:outline-brand"}`}
         >
           <LighthouseLogo className="h-10 w-10 lg:h-11 lg:w-11" />

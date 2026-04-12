@@ -444,7 +444,7 @@ export function LogTable({ rows }: Props) {
               <p className="text-sm text-muted-foreground">live window</p>
             </div>
             <Link
-              href="/"
+              href="/harbor"
               className="rounded-md border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-[rgb(27,49,57)] shadow-sm transition hover:border-slate-400 hover:bg-slate-50"
             >
               ← Harbor overview

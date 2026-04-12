@@ -10,7 +10,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000) (redirects to Harbor Overview). The marketing hero lives at [`/welcome`](http://localhost:3000/welcome).
 
 ## Expected Log Input
 
@@ -51,7 +51,7 @@ The dashboard loads sample data from `public/sample_logs/set_a/` on startup. Cus
 
 ### Pages
 
-1. **Harbor Overview** (`/`) -- Executive summary with KPI cards, request volume timeline, severity breakdown, hazard class distribution, and Beacon Alert cards for each intervention.
+1. **Harbor Overview** (`/harbor`, also opened from `/`) -- Executive summary with KPI cards, request volume timeline, severity breakdown, hazard class distribution, and Beacon Alert cards for each intervention.
 
 2. **The Beam** (`/beam`) -- Browse all 120 request lifecycles. Click any request to see a full pipeline waterfall visualization showing embeddings, LLM reasoning, rule evaluation, observations, and predictions on a timeline. Each event is color-coded by category and has hover tooltips with metadata.
 
@@ -85,7 +85,8 @@ Lighthouse transforms raw Inhibitor pipeline logs into an auditor-friendly inter
 ```
 lighthouse/
   app/
-    page.tsx            -- Harbor Overview
+    page.tsx            -- Redirects `/` → `/harbor`
+    welcome/page.tsx    -- Optional marketing landing (dark hero)
     beam/
       page.tsx          -- Request trace listing
       [requestIndex]/
