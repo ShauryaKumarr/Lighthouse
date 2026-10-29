@@ -68,8 +68,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     async function load() {
       try {
         const [csvResp, jsonlResp] = await Promise.all([
-          fetch("/sample_logs/set_a/inhibitor_logs.csv"),
-          fetch("/sample_logs/set_a/inhibitor_events.jsonl"),
+          fetch(`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/sample_logs/set_a/inhibitor_logs.csv`),
+          fetch(`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/sample_logs/set_a/inhibitor_events.jsonl`),
         ]);
 
         const csvText = await csvResp.text();
